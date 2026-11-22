@@ -202,6 +202,41 @@ describe('parseHar: edge cases', () => {
     expect(parsed.warnings.some((w) => w.message.includes('version'))).toBe(true);
   });
 
+  it('keeps the redirect target of a redirect response', () => {
+    const entry = makeEntry({
+      status: 302,
+      statusText: 'Found',
+      responseBody: { mimeType: '', size: 0 },
+    });
+    (entry['response'] as Record<string, unknown>)['redirectURL'] = 'https://api.example.test/next';
+    const parsed = parseHar(harToBuffer(makeHar([entry])));
+    const response = parsed.entries[0]!.response;
+    expect(response.status).toBe(302);
+    expect(response.redirectUrl).toBe('https://api.example.test/next');
+    expect(response.body).toBeUndefined();
+  });
+
+  it('reads XML and plain text bodies as text', () => {
+    const parsed = parseHar(
+      harToBuffer(
+        makeHar([
+          makeEntry({ responseBody: { mimeType: 'application/xml', text: '<a>1</a>' } }),
+          makeEntry({ responseBody: { mimeType: 'text/plain', text: 'hello' } }),
+        ]),
+      ),
+    );
+    expect(parsed.entries.map((e) => e.response.body?.text)).toEqual(['<a>1</a>', 'hello']);
+  });
+
+  it('reads a cancelled request without timings or a status text', () => {
+    const entry = makeEntry({ status: 0, statusText: '', responseBody: { mimeType: '' } });
+    entry['time'] = 'n/a';
+    entry['timings'] = null;
+    const parsed = parseHar(harToBuffer(makeHar([entry])));
+    expect(parsed.entries[0]!.time).toBe(-1);
+    expect(parsed.entries[0]!.timings).toEqual({});
+  });
+
   it('keeps empty-string bodies distinct from missing bodies', () => {
     const parsed = parseHar(
       harToBuffer(makeHar([makeEntry({ responseBody: { mimeType: 'text/plain', text: '' } })])),

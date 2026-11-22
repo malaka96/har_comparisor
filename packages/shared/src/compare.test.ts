@@ -66,6 +66,21 @@ describe('compareEntries', () => {
     expect(result.url.identical).toBe(false);
   });
 
+  it('compares a failed request (status 0) with a successful one', () => {
+    const result = compareEntries(entry({ status: 0 }), entry({ status: 200 }));
+    expect(result.identical).toBe(false);
+    expect(result.status).toEqual({ legacy: 0, new: 200, identical: false });
+  });
+
+  it('reports a scheme difference', () => {
+    const result = compareEntries(
+      entry({ url: 'http://a.test/x' }),
+      entry({ url: 'https://a.test/x' }),
+    );
+    expect(result.url.scheme.identical).toBe(false);
+    expect(result.identical).toBe(false);
+  });
+
   it('reports field changes in the response body', () => {
     const result = compareEntries(
       entry({ responseBody: json('{"name":"a","count":1}') }),
@@ -155,6 +170,25 @@ describe('compareBodies', () => {
     });
     expect(compareBodies(b('AAAA'), b('AAAA'))).toMatchObject({ identical: true, kind: 'binary' });
     expect(compareBodies(b('AAAA'), b('BBBB'))).toMatchObject({ identical: false, kind: 'binary' });
+  });
+
+  it('compares XML bodies as text', () => {
+    const x = (text: string): NormalizedBody => ({ mimeType: 'application/xml', text });
+    expect(compareBodies(x('<a>1</a>'), x('<a>1</a>'))).toMatchObject({
+      identical: true,
+      kind: 'text',
+    });
+    expect(compareBodies(x('<a>1</a>'), x('<a>2</a>'))).toMatchObject({
+      identical: false,
+      kind: 'text',
+    });
+  });
+
+  it('treats JSON with surrounding whitespace as JSON', () => {
+    expect(compareBodies(json('  {"a":1}\n'), json('{"a":1}'))).toMatchObject({
+      identical: true,
+      kind: 'json',
+    });
   });
 
   it('compares form parameters when no text was recorded', () => {
