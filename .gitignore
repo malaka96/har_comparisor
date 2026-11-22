@@ -1,0 +1,8 @@
+# Real HAR files may contain tokens, cookies and personal data. Never commit them.
+*.har
+*.har.json
+/private/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
