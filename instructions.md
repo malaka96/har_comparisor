@@ -139,11 +139,11 @@ Notes on ordering:
 
 **Tasks (one commit each, or more):**
 
-- [ ] 3.1 Workspace skeleton: npm workspaces (`shared`, `server`, `client`), TypeScript strict, Prettier, ESLint, root scripts
-- [ ] 3.2 Shared types: HAR input and normalized entry
-- [ ] 3.3 HAR parsing, validation and normalization in `server`, with synthetic-fixture tests
-- [ ] 3.4 Edge cases: empty entries, missing bodies, Base64 bodies, failed requests, bad input
-- [ ] 3.5 Upload API (Fastify) with in-memory storage and expiry, serving the built client on port 9096
+- [x] 3.1 Workspace skeleton: npm workspaces (`shared`, `server`, `client`), TypeScript strict, Prettier, ESLint, root scripts
+- [x] 3.2 Shared types: HAR input and normalized entry
+- [x] 3.3 HAR parsing, validation and normalization in `server`, with synthetic-fixture tests
+- [x] 3.4 Edge cases: empty entries, missing bodies, Base64 bodies, failed requests, bad input
+- [x] 3.5 Upload API (Fastify) with in-memory storage and expiry, serving the built client on port 9096
 - [ ] 3.6 Minimal UI: two resizable panes, load, list, errors, Monaco body preview
 - [ ] 3.7 Verify with the real sample HARs and in the browser; document how to run and test
 
