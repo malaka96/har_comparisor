@@ -44,6 +44,11 @@ function Summary({ comparison }: { comparison: EntryComparison }) {
   const { method, status, url } = comparison;
   return (
     <table className="summary-table" data-testid="comparison-summary">
+      <colgroup>
+        <col className="summary-label" />
+        <col />
+        <col />
+      </colgroup>
       <thead>
         <tr>
           <th />

@@ -113,24 +113,18 @@ export function App() {
     };
   })();
 
+  // Clicking a paired request selects its partner too. Clicking an unpaired request keeps
+  // the other side's selection, so the two can be compared and (re-)paired.
   function selectLegacy(index: number) {
     const pair = pairOfLegacy(pairing, index);
-    if (pair) return setSelection({ legacy: index, new: pair.new });
-    setSelection((old) => ({
-      legacy: index,
-      // Keep the new-side selection only when it is free to pair with this one.
-      new: old.new !== undefined && !pairOfNew(pairing, old.new) ? old.new : undefined,
-    }));
+    if (pair) setSelection({ legacy: index, new: pair.new });
+    else setSelection((old) => ({ ...old, legacy: index }));
   }
 
   function selectNew(index: number) {
     const pair = pairOfNew(pairing, index);
-    if (pair) return setSelection({ legacy: pair.legacy, new: index });
-    setSelection((old) => ({
-      legacy:
-        old.legacy !== undefined && !pairOfLegacy(pairing, old.legacy) ? old.legacy : undefined,
-      new: index,
-    }));
+    if (pair) setSelection({ legacy: pair.legacy, new: index });
+    else setSelection((old) => ({ ...old, new: index }));
   }
 
   const selectedPair =

@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import type { EntrySummary } from '@har-comparisor/shared';
 import { formatBytes, formatTime, statusClass, statusLabel } from '../format';
 
@@ -18,6 +19,16 @@ interface Props {
 }
 
 export function EntryTable({ side, entries, selectedIndex, onSelect, markers }: Props) {
+  const body = useRef<HTMLTableSectionElement>(null);
+
+  // Keep the selected row visible, for example when it was selected as a partner.
+  useEffect(() => {
+    if (selectedIndex === undefined) return;
+    body.current
+      ?.querySelector(`tr[data-index="${selectedIndex}"]`)
+      ?.scrollIntoView({ block: 'nearest' });
+  }, [selectedIndex]);
+
   if (entries.length === 0) {
     return <div className="body-message">This HAR has no readable requests.</div>;
   }
@@ -35,7 +46,7 @@ export function EntryTable({ side, entries, selectedIndex, onSelect, markers }: 
           <th className="col-time">Time</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody ref={body}>
         {entries.map((entry) => {
           const marker = markers.get(entry.index);
           return (

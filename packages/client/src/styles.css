@@ -433,8 +433,11 @@ table.entries tbody tr.selected {
   font-weight: 600;
 }
 
-.summary-table tbody th {
+.summary-table col.summary-label {
   width: 120px;
+}
+
+.summary-table tbody th {
   color: var(--text-muted);
   font-weight: 600;
 }
