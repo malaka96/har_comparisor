@@ -23,7 +23,7 @@ This is a living document. Update it as decisions, scope, and progress change. S
 | 2   | Architecture and Technology Evaluation           | [x]    |
 | 3   | Foundation: Project Skeleton and HAR Ingestion   | [x]    |
 | 4   | Core Comparison: Request Matching and Basic Diff | [x]    |
-| 5   | Testing Strategy and Quality Baseline            | [ ]    |
+| 5   | Testing Strategy and Quality Baseline            | [x]    |
 | 6   | Advanced Comparison Capabilities                 | [ ]    |
 | 7   | Reporting                                        | [ ]    |
 | 8   | User Interface and Usability                     | [ ]    |
@@ -202,13 +202,40 @@ Notes on ordering:
 
 **Objectives:** Make the quality bar explicit and sustainable.
 
-**Scope (to be refined at kickoff):**
+**Scope:**
 
-- Review and formalize the test pyramid for the project: unit, integration, and end-to-end tests with sanitized or synthetic HAR fixtures.
-- Fixture library covering the edge cases listed in `AGENTS.md`.
-- Coverage expectations that are meaningful (not a number chase).
-- Performance checks on large HAR files.
-- Test automation approach (for example continuous integration), if approved.
+- Test layers: unit tests (Vitest) next to the code in each package, API tests with Fastify `inject`, and end-to-end tests (Playwright) in a new `packages/e2e` package that drive the built app in a real browser.
+- Synthetic fixtures generated in code (no real HAR content, and `*.har` stays git-ignored). One legacy/new scenario covers the Stage 1 acceptance examples and the edge cases: identical pairs, value and type changes, status 500 vs 200, path change, swapped call order, Base64 body, 204 without body, redirect, failed request, non-JSON text, missing and extra requests.
+- Large-HAR check: a generated HAR with thousands of entries and large bodies, measured for upload, list rendering and comparison. Add virtual scrolling only if the measurement shows a need.
+- Fill unit-test gaps for redirects, failed requests and non-JSON bodies.
+- No coverage percentage target and no CI for now (the user runs the tool locally). Coverage is judged by the acceptance examples each test covers.
+
+**Tasks:**
+
+- [x] 5.1 `packages/e2e` with Playwright, the synthetic scenario builder, and an `npm run test:e2e` script
+- [x] 5.2 End-to-end tests for loading, invalid files, pairing, comparison details, re-pairing, resizing and reload
+- [x] 5.3 Large-HAR end-to-end check and measurement (fix performance if needed)
+- [x] 5.4 Unit-test gaps: redirects, failed requests, text and XML bodies
+- [x] 5.5 Document the testing approach in the README
+
+**Acceptance example coverage (automated):**
+
+| Example  | Test                                                                                          |
+| -------- | --------------------------------------------------------------------------------------------- |
+| A1, A18  | `loading.spec.ts`: loads a HAR and lists its requests                                         |
+| A2       | `loading.spec.ts`: rejects bad files; `parse-har.test.ts`, `app.test.ts`                      |
+| A3       | `large-har.spec.ts`                                                                           |
+| A4       | `comparison.spec.ts`: unpairs and re-pairs; `pairing.test.ts`                                 |
+| A5       | `repeated-calls.spec.ts`: same endpoint, different query strings, called in a different order |
+| A6       | `comparison.spec.ts`: swapped calls 2↔3 pair and compare by content                           |
+| A7, A8   | `loading.spec.ts` and `comparison.spec.ts`: missing and extra markers and counts              |
+| A9, A13  | `comparison.spec.ts`: status and request payload differences                                  |
+| A10, A11 | `comparison.spec.ts`: URL path differences (raw form; decoded view not built)                 |
+| A12      | `comparison.spec.ts`: field changes listed and highlighted side by side                       |
+| A14      | `comparison.spec.ts`: identical pairs                                                         |
+| A15      | `comparison.spec.ts`: 204 without body                                                        |
+| A16      | `comparison.spec.ts`: panels resize                                                           |
+| A17      | every comparison test (results shown in the app, no export)                                   |
 
 **Expected outcomes:**
 
@@ -217,8 +244,9 @@ Notes on ordering:
 
 **Completion criteria:**
 
-- Tests run with a single documented command.
-- The user agrees the baseline gives sufficient confidence to build advanced features.
+- `npm run check` (unit tests) and `npm run test:e2e` (browser tests) both pass and are documented.
+- Every Stage 1 acceptance example (A1 to A18) is covered by an automated test.
+- A large HAR (well above 15 MB) loads, lists and compares without freezing the page.
 
 **Dependencies:** Phases 3 and 4. Ongoing in later phases.
 
@@ -392,11 +420,12 @@ Notes on ordering:
 
 ## Progress Log
 
-| Date       | Phase | Summary                                                                                                                                                                                                                                                                                           |
-| ---------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-11-21 | Setup | Created `AGENTS.md` and `instructions.md`. No development started.                                                                                                                                                                                                                                |
-| 2026-11-21 | 0     | Initialized git, added remote `origin`, added `.gitignore`, created `docs/`, recorded working agreements. Phase 0 confirmed complete by the user.                                                                                                                                                 |
-| 2026-11-21 | 1     | Wrote and got approval for `docs/requirements.md` (requirements, 4 build stages, acceptance examples A1-A18). Studied the structure of the two sample HARs without copying content. Phase 1 complete.                                                                                             |
-| 2026-11-21 | 2     | Approved stack recorded in `docs/decisions.md`. Ran and deleted the throwaway spike (server parsing, diff viewers, JSON diff, panels). Wrote `docs/architecture.md` with results and proposals. User approved all items. Phase 2 complete. Version control rule added: commit during development. |
-| 2026-11-21 | 3     | Built the workspace, shared types, HAR parser with tests, upload API, and a minimal UI with Monaco body preview. Verified with both real HARs and in Chrome (22 checks). Phase 3 complete (confirmed by the user).                                                                                |
-| 2026-11-21 | 4     | Added structural JSON diff and entry comparison (shared), compare endpoint (server), manual pairing with missing/extra markers and a side-by-side Monaco comparison view (client). 76 unit tests pass. Verified A4 to A17 in Chrome with both real HARs (20 of 20 checks). Phase 4 complete.      |
+| Date       | Phase | Summary                                                                                                                                                                                                                                                                                                                                                                                |
+| ---------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-11-21 | Setup | Created `AGENTS.md` and `instructions.md`. No development started.                                                                                                                                                                                                                                                                                                                     |
+| 2026-11-21 | 0     | Initialized git, added remote `origin`, added `.gitignore`, created `docs/`, recorded working agreements. Phase 0 confirmed complete by the user.                                                                                                                                                                                                                                      |
+| 2026-11-21 | 1     | Wrote and got approval for `docs/requirements.md` (requirements, 4 build stages, acceptance examples A1-A18). Studied the structure of the two sample HARs without copying content. Phase 1 complete.                                                                                                                                                                                  |
+| 2026-11-21 | 2     | Approved stack recorded in `docs/decisions.md`. Ran and deleted the throwaway spike (server parsing, diff viewers, JSON diff, panels). Wrote `docs/architecture.md` with results and proposals. User approved all items. Phase 2 complete. Version control rule added: commit during development.                                                                                      |
+| 2026-11-21 | 3     | Built the workspace, shared types, HAR parser with tests, upload API, and a minimal UI with Monaco body preview. Verified with both real HARs and in Chrome (22 checks). Phase 3 complete (confirmed by the user).                                                                                                                                                                     |
+| 2026-11-21 | 4     | Added structural JSON diff and entry comparison (shared), compare endpoint (server), manual pairing with missing/extra markers and a side-by-side Monaco comparison view (client). 76 unit tests pass. Verified A4 to A17 in Chrome with both real HARs (20 of 20 checks). Phase 4 complete.                                                                                           |
+| 2026-11-21 | 5     | Added `packages/e2e` (Playwright, installed Chrome) with a synthetic scenario covering A1 to A18 and a large-HAR test (2 x 4000 requests, about 40 MB each). Profiled the large case: row clicks about 0.3 s in the page, so no virtual scrolling yet; rows memoized. Filled unit-test gaps (redirects, failed and cancelled requests, XML and text bodies, scheme). Phase 5 complete. |

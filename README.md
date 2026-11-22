@@ -49,10 +49,26 @@ Build the shared package once first (`npm run build -w @har-comparisor/shared`),
 ## Check the code
 
 ```bash
-npm run check   # format check, lint, type check, tests and build
+npm run check      # format check, lint, type check, unit tests and build
+npm run test:e2e   # build, then browser tests with Playwright
+npm run check:all  # both
 ```
 
 Single steps: `npm run format`, `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`.
+
+## Testing approach
+
+| Layer       | Tool                    | Where                                  | What it covers                                                                       |
+| ----------- | ----------------------- | -------------------------------------- | ------------------------------------------------------------------------------------ |
+| Unit        | Vitest                  | `*.test.ts` next to the code           | HAR parsing and edge cases, JSON diff, entry comparison, pairing logic, body display |
+| API         | Vitest + Fastify inject | `packages/server/src/app.test.ts`      | Upload, entry and compare endpoints, error codes, size limit                         |
+| End-to-end  | Playwright              | `packages/e2e/tests`                   | The acceptance examples A1 to A18 in a real browser, against the built app           |
+| Large files | Playwright              | `packages/e2e/tests/large-har.spec.ts` | Two generated HARs of about 40 MB each: load, list, compare, scroll                  |
+
+- All test data is synthetic and built in code (`packages/e2e/fixtures/har-fixtures.ts` and `packages/server/src/har/har-builder.test-util.ts`). Real HAR files are never committed.
+- The browser tests use your installed Google Chrome. To use Playwright's own Chromium instead, run `npx playwright install chromium` once and set `PW_CHANNEL=chromium`.
+- `E2E_PORT` (default `9197`) sets the port of the test server. `E2E_LARGE_COUNT` (default `4000`) sets the number of requests in the large-file test.
+- There is no coverage percentage target. New behavior gets a unit test, and user-visible behavior gets an end-to-end test.
 
 On Windows PowerShell, if `npm` is blocked by the script execution policy, use `npm.cmd`.
 
