@@ -21,7 +21,7 @@ Reloading the page or loading another file clears the pairs.
 ## Run with Docker (easiest)
 
 ```bash
-docker run -d --name har-comparisor -p 9096:9096 DOCKERHUB_USER/har-comparisor:latest
+docker run -d --name har-comparisor -p 9096:9096 malaka96/har-comparisor:latest
 ```
 
 Open <http://localhost:9096>. Stop it with `docker stop har-comparisor`, start it again with `docker start har-comparisor`.
