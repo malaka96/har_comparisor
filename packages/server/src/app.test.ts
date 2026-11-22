@@ -1,6 +1,11 @@
 import type { FastifyInstance } from 'fastify';
 import { afterEach, describe, expect, it } from 'vitest';
-import type { ApiErrorBody, HarSummaryResponse, NormalizedEntry } from '@har-comparisor/shared';
+import type {
+  ApiErrorBody,
+  CompareResponse,
+  HarSummaryResponse,
+  NormalizedEntry,
+} from '@har-comparisor/shared';
 import { buildApp } from './app.js';
 import type { ServerConfig } from './config.js';
 import { harToBuffer, makeEntry, makeHar } from './har/har-builder.test-util.js';
@@ -138,6 +143,80 @@ describe('API', () => {
     const unknownRoute = await instance.inject({ method: 'GET', url: '/api/nothing' });
     expect(unknownRoute.statusCode).toBe(404);
     expect(unknownRoute.json<ApiErrorBody>().error.code).toBe('NOT_FOUND');
+  });
+
+  it('compares a legacy entry with a new entry', async () => {
+    const instance = await start();
+    const legacy = (
+      await upload(
+        instance,
+        harToBuffer(
+          makeHar([
+            makeEntry({
+              status: 500,
+              responseBody: { mimeType: 'application/json', text: '{"a":1}' },
+            }),
+          ]),
+        ),
+      )
+    ).json<HarSummaryResponse>();
+    const next = (
+      await upload(
+        instance,
+        harToBuffer(
+          makeHar([makeEntry({ responseBody: { mimeType: 'application/json', text: '{"a":2}' } })]),
+        ),
+      )
+    ).json<HarSummaryResponse>();
+
+    const response = await instance.inject({
+      method: 'GET',
+      url: `/api/compare?legacyHar=${legacy.id}&legacyIndex=0&newHar=${next.id}&newIndex=0`,
+    });
+    expect(response.statusCode).toBe(200);
+    const body = response.json<CompareResponse>();
+    expect(body.legacy.response.status).toBe(500);
+    expect(body.new.response.status).toBe(200);
+    expect(body.comparison.identical).toBe(false);
+    expect(body.comparison.status.identical).toBe(false);
+    expect(body.comparison.responseBody.changes).toEqual([
+      { path: '$.a', kind: 'value', legacy: '1', new: '2' },
+    ]);
+  });
+
+  it('returns only the comparison when entries=false', async () => {
+    const instance = await start();
+    const created = (await upload(instance, harToBuffer(makeHar()))).json<HarSummaryResponse>();
+    const response = await instance.inject({
+      method: 'GET',
+      url: `/api/compare?legacyHar=${created.id}&legacyIndex=0&newHar=${created.id}&newIndex=0&entries=false`,
+    });
+    expect(response.statusCode).toBe(200);
+    const body = response.json<Record<string, unknown>>();
+    expect(Object.keys(body)).toEqual(['comparison']);
+    expect((body['comparison'] as { identical: boolean }).identical).toBe(true);
+  });
+
+  it('rejects a comparison with missing or unknown parts', async () => {
+    const instance = await start();
+    const created = (await upload(instance, harToBuffer(makeHar()))).json<HarSummaryResponse>();
+
+    const missing = await instance.inject({ method: 'GET', url: '/api/compare' });
+    expect(missing.statusCode).toBe(404);
+    expect(missing.json<ApiErrorBody>().error.code).toBe('HAR_NOT_FOUND');
+
+    const noIndex = await instance.inject({
+      method: 'GET',
+      url: `/api/compare?legacyHar=${created.id}&newHar=${created.id}&newIndex=0`,
+    });
+    expect(noIndex.statusCode).toBe(400);
+
+    const badEntry = await instance.inject({
+      method: 'GET',
+      url: `/api/compare?legacyHar=${created.id}&legacyIndex=0&newHar=${created.id}&newIndex=7`,
+    });
+    expect(badEntry.statusCode).toBe(404);
+    expect(badEntry.json<ApiErrorBody>().error.code).toBe('ENTRY_NOT_FOUND');
   });
 
   it('deletes a HAR', async () => {
