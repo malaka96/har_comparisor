@@ -3,6 +3,9 @@
 *.har.json
 /private/
 
+# Project notes kept locally only
+/docs/
+
 # Dependencies and build output
 node_modules/
 dist/
