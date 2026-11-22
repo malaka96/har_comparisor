@@ -3,6 +3,12 @@
 *.har.json
 /private/
 
+# Dependencies and build output
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
 # OS / editor noise
 .DS_Store
 Thumbs.db
