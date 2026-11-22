@@ -20,7 +20,9 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "npm run build -w @har-comparisor/shared && npm run typecheck --workspaces --if-present",
-    "check": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build"
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build",
+    "test:e2e": "npm run build && npm run e2e -w @har-comparisor/e2e",
+    "check:all": "npm run check && npm run e2e -w @har-comparisor/e2e"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

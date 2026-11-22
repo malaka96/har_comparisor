@@ -4,12 +4,26 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['**/dist/**', '**/node_modules/**', '**/coverage/**', 'private/**'] },
+  {
+    ignores: [
+      '**/dist/**',
+      '**/node_modules/**',
+      '**/coverage/**',
+      'private/**',
+      '**/test-results/**',
+      '**/playwright-report/**',
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    files: ['packages/server/**/*.ts', 'packages/shared/**/*.ts', '*.js'],
+    files: ['packages/server/**/*.ts', 'packages/shared/**/*.ts', 'packages/e2e/**/*.ts', '*.js'],
     languageOptions: { globals: globals.node },
+  },
+  {
+    // Code inside page.evaluate() runs in the browser.
+    files: ['packages/e2e/**/*.ts'],
+    languageOptions: { globals: { ...globals.node, ...globals.browser } },
   },
   {
     files: ['packages/client/**/*.{ts,tsx}'],

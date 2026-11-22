@@ -3,3 +3,6 @@ dist
 coverage
 package-lock.json
 /private
+/docs
+test-results
+playwright-report
