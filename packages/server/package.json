@@ -12,6 +12,7 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
+    "@har-comparisor/shared": "*",
     "@fastify/static": "^10.1.12",
     "fastify": "^5.12.8"
   }
