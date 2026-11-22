@@ -1,10 +1,8 @@
 import { useRef, useState, type DragEvent } from 'react';
 import type { HarSummaryResponse } from '@har-comparisor/shared';
-import { Group, Panel, Separator } from 'react-resizable-panels';
 import { deleteHar, errorMessage, uploadHar } from '../api';
 import { formatBytes } from '../format';
-import { EntryPreview } from './EntryPreview';
-import { EntryTable } from './EntryTable';
+import { EntryTable, type RowMarker } from './EntryTable';
 
 interface LoadError {
   fileName: string;
@@ -15,13 +13,17 @@ interface Props {
   /** Short name used in labels and test ids, for example `legacy`. */
   side: string;
   title: string;
+  har: HarSummaryResponse | undefined;
+  onLoaded: (har: HarSummaryResponse) => void;
+  selectedIndex: number | undefined;
+  onSelect: (index: number) => void;
+  markers: Map<number, RowMarker>;
 }
 
-export function HarPane({ side, title }: Props) {
-  const [har, setHar] = useState<HarSummaryResponse>();
+/** Loads a HAR for one side and lists its requests. */
+export function HarPane({ side, title, har, onLoaded, selectedIndex, onSelect, markers }: Props) {
   const [loadingName, setLoadingName] = useState<string>();
   const [error, setError] = useState<LoadError>();
-  const [selectedIndex, setSelectedIndex] = useState<number>();
   const [dragging, setDragging] = useState(false);
   const input = useRef<HTMLInputElement>(null);
 
@@ -31,8 +33,7 @@ export function HarPane({ side, title }: Props) {
     try {
       const loaded = await uploadHar(file);
       const previous = har;
-      setHar(loaded);
-      setSelectedIndex(undefined);
+      onLoaded(loaded);
       // Free the memory of the HAR that was replaced.
       if (previous) void deleteHar(previous.id).catch(() => undefined);
     } catch (caught) {
@@ -124,22 +125,14 @@ export function HarPane({ side, title }: Props) {
               </ul>
             </details>
           )}
-          <div className="pane-content">
-            <Group orientation="vertical">
-              <Panel id={`${side}-list`} defaultSize="55%" minSize="15%">
-                <div className="scroll">
-                  <EntryTable
-                    entries={har.entries}
-                    selectedIndex={selectedIndex}
-                    onSelect={setSelectedIndex}
-                  />
-                </div>
-              </Panel>
-              <Separator className="separator horizontal" />
-              <Panel id={`${side}-preview`} minSize="15%">
-                <EntryPreview harId={har.id} index={selectedIndex} />
-              </Panel>
-            </Group>
+          <div className="pane-content scroll">
+            <EntryTable
+              side={side}
+              entries={har.entries}
+              selectedIndex={selectedIndex}
+              onSelect={onSelect}
+              markers={markers}
+            />
           </div>
         </>
       )}

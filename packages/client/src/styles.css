@@ -302,6 +302,191 @@ table.entries tbody tr.selected {
   min-height: 0;
 }
 
+.app-header .counts {
+  display: flex;
+  gap: 14px;
+  flex: 1;
+  color: var(--text-muted);
+}
+
+.count.identical {
+  color: var(--ok);
+}
+.count.different {
+  color: var(--client-error);
+}
+.count.missing {
+  color: var(--server-error);
+}
+.count.extra {
+  color: var(--redirect);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.button.primary:not(:disabled) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.col-pair {
+  width: 70px;
+}
+
+.marker {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 18px;
+}
+.marker.identical {
+  background: #dafbe1;
+  color: var(--ok);
+}
+.marker.different {
+  background: #fff1e5;
+  color: var(--client-error);
+}
+.marker.pending {
+  background: var(--bg-muted);
+  color: var(--text-muted);
+}
+.marker.missing {
+  background: #ffebe9;
+  color: var(--server-error);
+}
+.marker.extra {
+  background: #ddf4ff;
+  color: var(--redirect);
+}
+
+.side-label {
+  font-weight: 600;
+}
+
+.tab-badge {
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: var(--bg-muted);
+  font-size: 12px;
+}
+
+.comparison {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.comparison-header {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.verdict {
+  font-weight: 700;
+}
+.verdict.identical {
+  color: var(--ok);
+}
+.verdict.different {
+  color: var(--client-error);
+}
+
+.hint {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.summary-table {
+  border-collapse: collapse;
+  margin: 4px 12px;
+  table-layout: fixed;
+  width: calc(100% - 24px);
+}
+
+.summary-table th,
+.summary-table td {
+  padding: 2px 8px;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.summary-table thead th {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.summary-table tbody th {
+  width: 120px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.summary-table tr.differs td {
+  background: #fff1e5;
+}
+
+.comparison-body {
+  flex: 1;
+  min-height: 0;
+}
+
+.change-list .note {
+  margin: 8px 12px;
+  color: var(--text-muted);
+}
+
+table.changes {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 12px;
+}
+
+table.changes th,
+table.changes td {
+  padding: 2px 6px;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-bottom: 1px solid var(--bg-muted);
+}
+
+table.changes thead th {
+  position: sticky;
+  top: 0;
+  background: var(--bg-muted);
+}
+
+tr.change.added td:nth-child(2) {
+  color: var(--ok);
+}
+tr.change.removed td:nth-child(2) {
+  color: var(--server-error);
+}
+tr.change.type td:nth-child(2),
+tr.change.value td:nth-child(2) {
+  color: var(--client-error);
+}
+
 .monaco-host {
   height: 100%;
   width: 100%;

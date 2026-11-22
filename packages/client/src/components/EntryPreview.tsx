@@ -2,23 +2,24 @@ import { useState } from 'react';
 import { describeBody } from '../body-display';
 import { statusClass, statusLabel } from '../format';
 import { useEntry } from '../use-entry';
+import { BodyTabs, type BodyTab } from './BodyTabs';
 import { BodyViewer } from './BodyViewer';
-
-type Tab = 'response' | 'request';
 
 interface Props {
   harId: string;
-  index: number | undefined;
+  index: number;
+  /** Shown before the URL, for example "Legacy". */
+  label: string;
 }
 
-export function EntryPreview({ harId, index }: Props) {
-  const [tab, setTab] = useState<Tab>('response');
+/** Shows one request on its own, when it has no counterpart selected. */
+export function EntryPreview({ harId, index, label }: Props) {
+  const [tab, setTab] = useState<BodyTab>('response');
   const state = useEntry(harId, index);
 
-  if (state.status === 'idle') {
-    return <div className="body-message">Select a request to preview its body.</div>;
+  if (state.status === 'idle' || state.status === 'loading') {
+    return <div className="body-message">Loading...</div>;
   }
-  if (state.status === 'loading') return <div className="body-message">Loading...</div>;
   if (state.status === 'error') {
     return (
       <div className="body-message error" role="alert">
@@ -27,12 +28,13 @@ export function EntryPreview({ harId, index }: Props) {
     );
   }
 
-  const { entry } = state;
+  const entry = state.value;
   const body = tab === 'response' ? entry.response.body : entry.request.body;
 
   return (
-    <div className="preview">
+    <div className="preview" data-testid="entry-preview">
       <div className="preview-header">
+        <span className="side-label">{label}</span>
         <span className={`status ${statusClass(entry.response.status)}`}>
           {statusLabel(entry.response.status)}
         </span>
@@ -41,19 +43,7 @@ export function EntryPreview({ harId, index }: Props) {
           {entry.request.url}
         </span>
       </div>
-      <div className="tabs" role="tablist">
-        {(['response', 'request'] as const).map((name) => (
-          <button
-            key={name}
-            role="tab"
-            aria-selected={tab === name}
-            className={tab === name ? 'tab active' : 'tab'}
-            onClick={() => setTab(name)}
-          >
-            {name === 'response' ? 'Response body' : 'Request body'}
-          </button>
-        ))}
-      </div>
+      <BodyTabs tab={tab} onChange={setTab} />
       <div className="preview-body">
         <BodyViewer key={`${entry.index}:${tab}`} display={describeBody(body)} />
       </div>
