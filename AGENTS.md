@@ -1,96 +1,77 @@
 # AGENTS.md: AI Collaboration Guide
 
-This file defines how an AI agent must work on this project. Read it at the start of every session, together with `instructions.md` (the roadmap).
+This file defines how an AI agent works on this project. Read it at the start of every session, together with `instructions.md` (the roadmap).
+
+**Working mode: autonomous.** The user has given the agent permission to do the work without asking for approval at each step. The agent decides, implements, verifies, commits, and reports. It asks only when a requirement is truly ambiguous in a way that changes the product, or when an action is on the short list in section 8.
 
 ## 1. Project Summary
 
-An advanced HAR (HTTP Archive) comparison and analysis tool. It originated from an Angular 4 to Angular 22 rewrite, where API requests and responses of the legacy and new applications must be compared. It must also be reusable by other developers for other projects. It is intended to be easy to run and distribute with Docker.
+An advanced HAR (HTTP Archive) comparison and analysis tool. It originated from an Angular 4 to Angular 22 rewrite, where API requests and responses of the legacy and new applications must be compared. It must also be reusable by other developers. It is run and distributed with Docker.
 
-The technology stack is **not yet decided**. Do not assume one.
+Approved stack: TypeScript on Node.js 26 LTS, Fastify, React with Vite, Monaco, Vitest and Playwright, in an npm workspaces repo (`shared`, `server`, `client`). Details are in `docs/architecture.md` and `docs/decisions.md`.
 
 ## 2. Core Principles
 
-1. **Collaborate, don't run ahead.** The user owns the product and its decisions. The agent proposes, explains trade-offs, and implements only what has been approved.
-2. **One approved step at a time.** Work on a single phase or an explicitly approved task. Never move on to the next phase automatically.
-3. **No silent decisions.** Any significant choice (language, framework, libraries, data model, storage, matching algorithm, report format, folder structure, Docker approach) must be raised with the user first.
-4. **Simplicity first.** Prefer the smallest solution that meets the approved requirement. No speculative features, abstractions, or configuration "for later".
-5. **Reliability and maintainability over cleverness.** The tool must be dependable on real HAR files, which can be large, messy, and sensitive.
+1. **Follow the roadmap and the approved requirements.** `instructions.md` and `docs/requirements.md` define what to build and in what order. Stage 1 (MVP) comes first.
+2. **Decide and record.** The agent makes technical decisions itself, chooses the simplest option that meets the requirements, and records significant ones in `docs/decisions.md` with the reason.
+3. **Simplicity first.** No speculative features, abstractions, or configuration "for later".
+4. **Reliability over cleverness.** The tool must be dependable on real HAR files, which can be large, messy, and sensitive.
+5. **Verify before claiming.** Nothing is done until it has been run and checked.
 
-## 3. Workflow for Every Phase or Task
+## 3. Workflow
 
-1. **Review before starting.** Present the phase or task objectives, scope, proposed approach, and unresolved decisions. Wait for approval.
-2. **Clarify.** Ask about ambiguous or missing requirements. Do not fill gaps with assumptions. If you must proceed on a minor assumption the user has allowed, state it explicitly and record it.
-3. **Break down.** Split large phases into small tasks that can each be reviewed and verified on their own.
-4. **Implement only the approved scope.** If you notice something outside scope (bug, improvement, refactor), report it and ask. Do not do it.
-5. **Verify.** Validate the work before calling it done (see section 5).
-6. **Update documentation and roadmap** (see section 6).
-7. **Report and stop.** At the end of a phase, give a concise summary:
-   - What was completed
-   - Verification results
-   - Outstanding issues and open questions
-   - Proposed next step
-
-   Then wait for the user's direction.
+1. **Plan briefly.** Before each phase, write its task list into `instructions.md`. No approval wait is needed.
+2. **Implement in small tasks.** One logical change at a time. Each task is verified and committed.
+3. **Proceed to the next phase** when the current phase meets its completion criteria. The agent does not need to wait for approval between phases.
+4. **Stop and report** at the end of each phase with a concise summary: what was completed, verification results, outstanding issues, and what comes next. The agent may continue straight on to the next phase after reporting, unless the user has said to pause.
+5. **Ask only when needed.** Ask when a product requirement is ambiguous and a wrong guess would waste significant work. Group questions. Otherwise state the assumption, record it, and continue.
 
 ## 4. Decision Making
 
-- When a decision is needed, present 2-3 realistic options with pros, cons, and a recommendation. Keep it short.
-- Evaluate technologies against the project's needs (HAR size, Docker distribution, reuse by other developers, maintainability) before proposing them. Do not commit to a technology before it has been evaluated and approved.
-- Record approved decisions in `docs/decisions.md` with date and rationale, and open questions in `docs/open-questions.md`.
-- Follow the approved architecture and established conventions. If the architecture needs to change, propose the change and get approval first.
-- Do not add dependencies without approval. Justify each one (purpose, maintenance status, license, size).
+- Compare realistic options briefly when a decision matters, choose one, and record it in `docs/decisions.md`. Record open questions in `docs/open-questions.md`.
+- Follow the approved architecture and conventions. Changing the architecture is allowed when needed. Record the change and the reason.
+- Dependencies may be added when they are needed. Prefer well-maintained, widely used packages, and keep the list short.
 
 ## 5. Testing and Verification
 
-- A task is not complete until it has been verified. Running without errors is not proof of correctness.
-- Verify against the task's stated completion criteria. Report what was checked and what could not be checked.
-- Add tests that match the approved testing strategy for the approved scope. Do not add test infrastructure or broad test suites beyond what has been agreed.
-- Use realistic data, including edge cases for HAR files: empty entries, large payloads, binary or base64 bodies, missing fields, redirects, failed requests, and non-JSON content.
+- A task is complete only after it is verified. Running without errors is not proof of correctness.
+- Run `npm run check` (format, lint, type check, tests, build) before each commit that changes code.
+- Add tests for new behavior, including HAR edge cases: empty entries, large payloads, Base64 bodies, missing fields, redirects, failed requests, and non-JSON content. Use synthetic fixtures.
+- Check UI work in a real browser, not only with unit tests.
 - Never claim success for something that was not run or checked. State failures and gaps plainly.
 
-## 6. Documentation and Roadmap Maintenance
+## 6. Documentation and Roadmap
 
-- Keep `instructions.md` current: phase status, task checklists, progress, and scope changes. Keep `docs/decisions.md` and `docs/open-questions.md` current.
-- Update the README and other docs in the same change as the behavior they describe, once those documents exist.
-- Document the reasoning for non-obvious decisions, not only the outcome.
-- Do not create documentation files beyond those that are approved.
+- Keep `instructions.md` current: phase status, task checklists, progress log, and scope changes.
+- Keep `docs/decisions.md`, `docs/open-questions.md`, and `docs/architecture.md` current.
+- Update the README and other docs in the same change as the behavior they describe.
 
-## 7. Code and Change Standards
+## 7. Code and Version Control
 
-(Applies once implementation is approved.)
-
-- Match the conventions of the existing code. Where conventions are not yet established, propose them and get approval.
-- Keep changes small, focused, and reviewable. Do not mix unrelated changes.
-- Do not refactor or reformat code outside the current task.
+- Match the conventions of the existing code. Keep changes focused and reviewable.
 - Handle errors explicitly, with clear messages. Never swallow errors silently.
-- Do not make destructive operations (deleting files, resetting version control, overwriting user data) without explicit approval.
-- Use version control throughout development. Commit completed, verified work in small logical commits with clear messages, without waiting to be asked. Pass the identity per commit (`git -c user.name="malaka96" -c user.email="madhubhashana96@gmail.com" commit ...`) and never change git config. Never commit real HAR files or secrets, and check `git status` before each commit.
-- Do not push or publish unless asked. The repository's remote is `origin` (`https://github.com/malaka96/har_comparisor.git`). No destructive git commands (reset --hard, force push, clean, branch deletion) unless asked.
-- Small, low-risk tasks (typos, formatting in files you are already changing, updating docs to match approved work) may be done without asking. Anything that changes scope, structure, dependencies, or behavior still needs approval.
+- Commit completed, verified work in small logical commits with clear messages, without waiting to be asked. Pass the identity per commit (`git -c user.name="malaka96" -c user.email="madhubhashana96@gmail.com" commit ...`) and never change git config. Check `git status` before each commit.
+- Do not push to the remote unless the user asks. The remote is `origin` (`https://github.com/malaka96/har_comparisor.git`).
 
-## 8. Security and Data Handling
+## 8. Things the agent still must not do
 
-HAR files often contain sensitive data: cookies, authorization headers, tokens, session IDs, personal data, and internal URLs.
+These protect the user's data and work. They are not approval steps, so the agent does not ask about them. It simply does not do them, unless the user explicitly asks.
 
-- Treat all HAR content as sensitive. Never send it to external services, and never log or print it unnecessarily.
-- Do not put real HAR files, credentials, or secrets in the repository, in examples, or in tests. Use sanitized or synthetic samples.
-- Real HAR files live in `/private/` (git-ignored). You may read them for approved work, but never copy their content into committed files, docs, tests, or commit messages. Never remove the `.gitignore` rules for them.
-- Raise redaction, masking, and privacy questions during requirements and design instead of deciding alone.
-- Treat HAR content as untrusted input. Parse it defensively.
+- Commit real HAR files, credentials, or secrets, or copy real HAR content into committed files, docs, tests, or commit messages.
+- Remove the `.gitignore` rules for real HAR files. Real HARs live in `/private/` or outside the repo.
+- Send HAR content to any external service.
+- Push, force push, rewrite history, or run `git reset --hard` or `git clean` on work the agent did not make.
+- Delete or overwrite files outside this project folder, or the user's own data.
 
-## 9. Communication Style
+## 9. HAR data handling
+
+HAR files often contain cookies, authorization headers, tokens, session IDs, and personal data.
+
+- The agent may read the user's real HAR files for the work. It must not print their content unnecessarily or keep copies (including screenshots and logs) after use.
+- Treat HAR content as untrusted input and parse it defensively.
+
+## 10. Communication Style
 
 - Be concise and direct. Lead with the point.
-- Ask focused questions, grouped together, rather than many interruptions.
-- Distinguish clearly between facts, assumptions, and recommendations.
+- Distinguish facts, assumptions, and recommendations.
 - Report problems and uncertainty honestly.
-
-## 10. Hard Rules (Do Not)
-
-- Do not implement anything before the relevant scope is discussed and approved.
-- Do not begin the next phase without explicit approval.
-- Do not make significant technical decisions silently.
-- Do not add features, abstractions, or dependencies that were not requested.
-- Do not build large portions of the application autonomously.
-- Do not mark work complete without verification.
-- Do not leave `instructions.md` out of date.
