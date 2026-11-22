@@ -16,20 +16,20 @@ This is a living document. Update it as decisions, scope, and progress change. S
 
 ## Phase Overview
 
-| #   | Phase                                            | Status          |
-| --- | ------------------------------------------------ | --------------- |
-| 0   | Project Setup and Working Agreements             | [x]             |
-| 1   | Product Discovery and Requirements               | [x]             |
-| 2   | Architecture and Technology Evaluation           | [x]             |
-| 3   | Foundation: Project Skeleton and HAR Ingestion   | [~] in progress |
-| 4   | Core Comparison: Request Matching and Basic Diff | [ ]             |
-| 5   | Testing Strategy and Quality Baseline            | [ ]             |
-| 6   | Advanced Comparison Capabilities                 | [ ]             |
-| 7   | Reporting                                        | [ ]             |
-| 8   | User Interface and Usability                     | [ ]             |
-| 9   | Dockerization and Distribution                   | [ ]             |
-| 10  | Documentation                                    | [ ]             |
-| 11  | Hardening and Release                            | [ ]             |
+| #   | Phase                                            | Status |
+| --- | ------------------------------------------------ | ------ |
+| 0   | Project Setup and Working Agreements             | [x]    |
+| 1   | Product Discovery and Requirements               | [x]    |
+| 2   | Architecture and Technology Evaluation           | [x]    |
+| 3   | Foundation: Project Skeleton and HAR Ingestion   | [x]    |
+| 4   | Core Comparison: Request Matching and Basic Diff | [ ]    |
+| 5   | Testing Strategy and Quality Baseline            | [ ]    |
+| 6   | Advanced Comparison Capabilities                 | [ ]    |
+| 7   | Reporting                                        | [ ]    |
+| 8   | User Interface and Usability                     | [ ]    |
+| 9   | Dockerization and Distribution                   | [ ]    |
+| 10  | Documentation                                    | [ ]    |
+| 11  | Hardening and Release                            | [ ]    |
 
 Notes on ordering:
 
@@ -389,4 +389,4 @@ Notes on ordering:
 | 2026-11-21 | 0     | Initialized git, added remote `origin`, added `.gitignore`, created `docs/`, recorded working agreements. Phase 0 confirmed complete by the user.                                                                                                                                                 |
 | 2026-11-21 | 1     | Wrote and got approval for `docs/requirements.md` (requirements, 4 build stages, acceptance examples A1-A18). Studied the structure of the two sample HARs without copying content. Phase 1 complete.                                                                                             |
 | 2026-11-21 | 2     | Approved stack recorded in `docs/decisions.md`. Ran and deleted the throwaway spike (server parsing, diff viewers, JSON diff, panels). Wrote `docs/architecture.md` with results and proposals. User approved all items. Phase 2 complete. Version control rule added: commit during development. |
-| 2026-11-21 | 3     | Built the workspace, shared types, HAR parser with tests, upload API, and a minimal UI with Monaco body preview. Verified with both real HARs and in Chrome (22 checks). Awaiting the user's review.                                                                                              |
+| 2026-11-21 | 3     | Built the workspace, shared types, HAR parser with tests, upload API, and a minimal UI with Monaco body preview. Verified with both real HARs and in Chrome (22 checks). Phase 3 complete (confirmed by the user).                                                                                |
