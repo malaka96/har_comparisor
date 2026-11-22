@@ -358,6 +358,11 @@ table.entries tbody tr.selected {
   background: #fff1e5;
   color: var(--client-error);
 }
+.marker.error {
+  background: var(--bg-muted);
+  color: var(--server-error);
+  text-decoration: line-through;
+}
 .marker.pending {
   background: var(--bg-muted);
   color: var(--text-muted);

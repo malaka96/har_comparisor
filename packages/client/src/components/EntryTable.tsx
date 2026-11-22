@@ -2,7 +2,7 @@ import { memo, useEffect, useRef, type KeyboardEvent, type MouseEvent } from 're
 import type { EntrySummary } from '@har-comparisor/shared';
 import { formatBytes, formatTime, statusClass, statusLabel } from '../format';
 
-export type MarkerTone = 'identical' | 'different' | 'pending' | 'missing' | 'extra';
+export type MarkerTone = 'identical' | 'different' | 'error' | 'pending' | 'missing' | 'extra';
 
 export interface RowMarker {
   label: string;

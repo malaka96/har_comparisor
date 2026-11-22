@@ -70,7 +70,7 @@ export function App() {
     const next = new Map<number, RowMarker>();
     for (const pair of pairing.pairs) {
       const status = statusOf(pair.legacy, pair.new);
-      const tone = status === 'identical' ? 'identical' : status ? 'different' : 'pending';
+      const tone = status ?? 'pending';
       const label = `#${numbers.get(pair.id)}`;
       const title =
         status === 'identical'
@@ -102,7 +102,7 @@ export function App() {
     for (const pair of pairing.pairs) {
       const status = statusOf(pair.legacy, pair.new);
       if (status === 'identical') identical++;
-      else if (status) different++;
+      else if (status === 'different') different++;
     }
     return {
       pairs: pairing.pairs.length,
