@@ -20,6 +20,8 @@ Reloading the page or loading another file clears the pairs.
 
 ## Run with Docker (easiest)
 
+The image is on Docker Hub: [malaka96/har-comparisor](https://hub.docker.com/r/malaka96/har-comparisor) (`linux/amd64` and `linux/arm64`, so it runs on Windows, Linux and Apple-silicon Macs).
+
 ```bash
 docker run -d --name har-comparisor -p 9096:9096 malaka96/har-comparisor:latest
 ```
@@ -30,11 +32,20 @@ Open <http://localhost:9096>. Stop it with `docker stop har-comparisor`, start i
 - Settings from the table below can be passed with `-e`, for example `-e MAX_UPLOAD_MB=2048`.
 - Nothing is written to disk. Loaded HAR files stay in the container's memory and are gone when it stops.
 
+Get a newer version with `docker pull malaka96/har-comparisor:latest`, then remove and start the container again. A specific version can be pinned, for example `malaka96/har-comparisor:0.1.0`.
+
 Build the image yourself from this repository:
 
 ```bash
 docker build -t har-comparisor .
 docker run -d -p 9096:9096 har-comparisor
+```
+
+Publish a new version (maintainers, after `docker login`):
+
+```bash
+docker buildx build --platform linux/amd64,linux/arm64 --build-arg VERSION=X.Y.Z \
+  -t malaka96/har-comparisor:X.Y.Z -t malaka96/har-comparisor:latest --push .
 ```
 
 ## Requirements (without Docker)
