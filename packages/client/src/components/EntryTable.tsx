@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { memo, useEffect, useRef, type KeyboardEvent, type MouseEvent } from 'react';
 import type { EntrySummary } from '@har-comparisor/shared';
 import { formatBytes, formatTime, statusClass, statusLabel } from '../format';
 
@@ -18,6 +18,62 @@ interface Props {
   markers: Map<number, RowMarker>;
 }
 
+interface RowProps {
+  entry: EntrySummary;
+  selected: boolean;
+  marker: RowMarker | undefined;
+}
+
+function sameMarker(a: RowMarker | undefined, b: RowMarker | undefined): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  return a.label === b.label && a.tone === b.tone && a.title === b.title;
+}
+
+/**
+ * One request row. Memoized so that a click re-renders only the rows whose
+ * selection or marker changed, which keeps large HARs (thousands of rows) responsive.
+ */
+const Row = memo(
+  function Row({ entry, selected, marker }: RowProps) {
+    return (
+      <tr
+        className={selected ? 'selected' : undefined}
+        tabIndex={0}
+        data-index={entry.index}
+        aria-selected={selected}
+      >
+        <td className="col-index">{entry.index}</td>
+        <td className="col-pair">
+          {marker && (
+            <span className={`marker ${marker.tone}`} title={marker.title}>
+              {marker.label}
+            </span>
+          )}
+        </td>
+        <td className="col-method">{entry.method}</td>
+        <td className="col-status">
+          <span className={`status ${statusClass(entry.status)}`}>{statusLabel(entry.status)}</span>
+        </td>
+        <td className="col-path" title={entry.url}>
+          {entry.path}
+        </td>
+        <td className="col-type">{entry.resourceType ?? ''}</td>
+        <td className="col-size">{formatBytes(entry.size)}</td>
+        <td className="col-time">{formatTime(entry.time)}</td>
+      </tr>
+    );
+  },
+  (a, b) => a.entry === b.entry && a.selected === b.selected && sameMarker(a.marker, b.marker),
+);
+
+/** Index of the row an event happened in, read from `data-index`. */
+function rowIndex(target: EventTarget): number | undefined {
+  const row = (target as HTMLElement).closest('tr[data-index]');
+  const value = row?.getAttribute('data-index');
+  return value === null || value === undefined ? undefined : Number(value);
+}
+
 export function EntryTable({ side, entries, selectedIndex, onSelect, markers }: Props) {
   const body = useRef<HTMLTableSectionElement>(null);
 
@@ -32,6 +88,21 @@ export function EntryTable({ side, entries, selectedIndex, onSelect, markers }: 
   if (entries.length === 0) {
     return <div className="body-message">This HAR has no readable requests.</div>;
   }
+
+  // One handler for the whole table instead of one per row.
+  function onClick(event: MouseEvent<HTMLTableSectionElement>) {
+    const index = rowIndex(event.target);
+    if (index !== undefined) onSelect(index);
+  }
+
+  function onKeyDown(event: KeyboardEvent<HTMLTableSectionElement>) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    const index = rowIndex(event.target);
+    if (index === undefined) return;
+    event.preventDefault();
+    onSelect(index);
+  }
+
   return (
     <table className="entries" data-testid={`entries-${side}`}>
       <thead>
@@ -46,47 +117,15 @@ export function EntryTable({ side, entries, selectedIndex, onSelect, markers }: 
           <th className="col-time">Time</th>
         </tr>
       </thead>
-      <tbody ref={body}>
-        {entries.map((entry) => {
-          const marker = markers.get(entry.index);
-          return (
-            <tr
-              key={entry.index}
-              className={entry.index === selectedIndex ? 'selected' : undefined}
-              tabIndex={0}
-              data-index={entry.index}
-              onClick={() => onSelect(entry.index)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault();
-                  onSelect(entry.index);
-                }
-              }}
-              aria-selected={entry.index === selectedIndex}
-            >
-              <td className="col-index">{entry.index}</td>
-              <td className="col-pair">
-                {marker && (
-                  <span className={`marker ${marker.tone}`} title={marker.title}>
-                    {marker.label}
-                  </span>
-                )}
-              </td>
-              <td className="col-method">{entry.method}</td>
-              <td className="col-status">
-                <span className={`status ${statusClass(entry.status)}`}>
-                  {statusLabel(entry.status)}
-                </span>
-              </td>
-              <td className="col-path" title={entry.url}>
-                {entry.path}
-              </td>
-              <td className="col-type">{entry.resourceType ?? ''}</td>
-              <td className="col-size">{formatBytes(entry.size)}</td>
-              <td className="col-time">{formatTime(entry.time)}</td>
-            </tr>
-          );
-        })}
+      <tbody ref={body} onClick={onClick} onKeyDown={onKeyDown}>
+        {entries.map((entry) => (
+          <Row
+            key={entry.index}
+            entry={entry}
+            selected={entry.index === selectedIndex}
+            marker={markers.get(entry.index)}
+          />
+        ))}
       </tbody>
     </table>
   );
