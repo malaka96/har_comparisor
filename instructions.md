@@ -144,8 +144,8 @@ Notes on ordering:
 - [x] 3.3 HAR parsing, validation and normalization in `server`, with synthetic-fixture tests
 - [x] 3.4 Edge cases: empty entries, missing bodies, Base64 bodies, failed requests, bad input
 - [x] 3.5 Upload API (Fastify) with in-memory storage and expiry, serving the built client on port 9096
-- [ ] 3.6 Minimal UI: two resizable panes, load, list, errors, Monaco body preview
-- [ ] 3.7 Verify with the real sample HARs and in the browser; document how to run and test
+- [x] 3.6 Minimal UI: two resizable panes, load, list, errors, Monaco body preview
+- [x] 3.7 Verify with the real sample HARs and in the browser; document how to run and test
 
 **Expected outcomes:**
 
@@ -389,3 +389,4 @@ Notes on ordering:
 | 2026-11-21 | 0     | Initialized git, added remote `origin`, added `.gitignore`, created `docs/`, recorded working agreements. Phase 0 confirmed complete by the user.                                                                                                                                                 |
 | 2026-11-21 | 1     | Wrote and got approval for `docs/requirements.md` (requirements, 4 build stages, acceptance examples A1-A18). Studied the structure of the two sample HARs without copying content. Phase 1 complete.                                                                                             |
 | 2026-11-21 | 2     | Approved stack recorded in `docs/decisions.md`. Ran and deleted the throwaway spike (server parsing, diff viewers, JSON diff, panels). Wrote `docs/architecture.md` with results and proposals. User approved all items. Phase 2 complete. Version control rule added: commit during development. |
+| 2026-11-21 | 3     | Built the workspace, shared types, HAR parser with tests, upload API, and a minimal UI with Monaco body preview. Verified with both real HARs and in Chrome (22 checks). Awaiting the user's review.                                                                                              |
