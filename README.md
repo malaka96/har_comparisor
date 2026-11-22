@@ -18,12 +18,31 @@ Status: early development (Stage 1). You can load one HAR on each side, pair equ
 
 Reloading the page or loading another file clears the pairs.
 
-## Requirements
+## Run with Docker (easiest)
+
+```bash
+docker run -d --name har-comparisor -p 9096:9096 DOCKERHUB_USER/har-comparisor:latest
+```
+
+Open <http://localhost:9096>. Stop it with `docker stop har-comparisor`, start it again with `docker start har-comparisor`.
+
+- Use another port on your machine with `-p 8080:9096` (then open <http://localhost:8080>).
+- Settings from the table below can be passed with `-e`, for example `-e MAX_UPLOAD_MB=2048`.
+- Nothing is written to disk. Loaded HAR files stay in the container's memory and are gone when it stops.
+
+Build the image yourself from this repository:
+
+```bash
+docker build -t har-comparisor .
+docker run -d -p 9096:9096 har-comparisor
+```
+
+## Requirements (without Docker)
 
 - Node.js 26 (LTS) and npm
 - A modern browser
 
-## Run it
+## Run it (without Docker)
 
 ```bash
 npm install
@@ -67,6 +86,7 @@ Single steps: `npm run format`, `npm run lint`, `npm run typecheck`, `npm test`,
 
 - All test data is synthetic and built in code (`packages/e2e/fixtures/har-fixtures.ts` and `packages/server/src/har/har-builder.test-util.ts`). Real HAR files are never committed.
 - The browser tests use your installed Google Chrome. To use Playwright's own Chromium instead, run `npx playwright install chromium` once and set `PW_CHANNEL=chromium`.
+- `E2E_BASE_URL` runs the browser tests against an app that is already running, for example a Docker container: `docker run -d -p 9198:9096 har-comparisor`, then `E2E_BASE_URL=http://127.0.0.1:9198 npm run e2e -w @har-comparisor/e2e`.
 - `E2E_PORT` (default `9197`) sets the port of the test server. `E2E_LARGE_COUNT` (default `4000`) sets the number of requests in the large-file test.
 - There is no coverage percentage target. New behavior gets a unit test, and user-visible behavior gets an end-to-end test.
 

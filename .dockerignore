@@ -1,0 +1,13 @@
+# Keep the build context small and never send real HAR files or local notes to Docker.
+**/node_modules
+**/dist
+**/test-results
+**/playwright-report
+**/coverage
+**/*.tsbuildinfo
+.git
+.kiro
+docs
+private
+*.har
+*.har.json
