@@ -1,7 +1,9 @@
 # syntax=docker/dockerfile:1
 
 # ---- Build: install everything and build shared, server and client ----
-FROM node:26-alpine AS build
+# The output is plain JavaScript, so it is built once on the machine's own platform
+# (no emulation) and copied into the runtime image of every target platform.
+FROM --platform=$BUILDPLATFORM node:26-alpine AS build
 WORKDIR /app
 
 COPY package.json package-lock.json ./
