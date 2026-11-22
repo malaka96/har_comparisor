@@ -2,7 +2,21 @@
 
 A local web tool to compare two HAR (HTTP Archive) files, for example the API traffic of a legacy application and its rewrite.
 
-Status: early development. Right now the tool loads one HAR on each side, lists the requests, and previews request and response bodies. Pairing and comparison are planned (see [instructions.md](instructions.md)).
+Status: early development (Stage 1). You can load one HAR on each side, pair equivalent requests by hand, and compare them side by side. Headers, filtering, saving and export come later (see [instructions.md](instructions.md)).
+
+## How to use
+
+1. Load the legacy HAR on the left and the new HAR on the right (button or drag and drop).
+2. Click a request on each side. The bottom panel shows their comparison straight away.
+3. Click **Pair selected** to keep them as a pair. Clicking a paired request selects its partner. **Unpair** releases the pair, and pairing a request again moves it to the new partner.
+4. Markers in the **Pair** column show the state of each request:
+   - `#n` green: paired and identical
+   - `#n` orange: paired, with differences
+   - `missing`: not paired, only in legacy
+   - `extra`: not paired, only in new
+5. The comparison compares method, status, host, path, query parameters and the request and response bodies. JSON bodies are compared field by field (key order is ignored, arrays are compared by position) and shown side by side. Headers are not compared yet.
+
+Reloading the page or loading another file clears the pairs.
 
 ## Requirements
 

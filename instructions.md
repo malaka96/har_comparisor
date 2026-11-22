@@ -22,7 +22,7 @@ This is a living document. Update it as decisions, scope, and progress change. S
 | 1   | Product Discovery and Requirements               | [x]    |
 | 2   | Architecture and Technology Evaluation           | [x]    |
 | 3   | Foundation: Project Skeleton and HAR Ingestion   | [x]    |
-| 4   | Core Comparison: Request Matching and Basic Diff | [ ]    |
+| 4   | Core Comparison: Request Matching and Basic Diff | [x]    |
 | 5   | Testing Strategy and Quality Baseline            | [ ]    |
 | 6   | Advanced Comparison Capabilities                 | [ ]    |
 | 7   | Reporting                                        | [ ]    |
@@ -164,26 +164,35 @@ Notes on ordering:
 
 ## Phase 4: Core Comparison: Request Matching and Basic Diff
 
-**Objectives:** Match equivalent requests between two HARs and report basic differences.
+**Objectives:** Let the user pair equivalent requests by hand and show the differences within each pair (Stage 1: F2, F3, F4, F6, F7, F8).
 
-**Scope (to be refined at kickoff):**
+**Scope:**
 
-- Matching strategy for equivalent requests (method, normalized URL and path, query parameters, optional rules). Strategy to be agreed.
-- Handling of duplicates and repeated calls to the same endpoint.
-- Identifying missing and additional requests.
-- Comparison of status codes, headers (with ignore options), request payloads, and response bodies.
-- Structured, readable diff output (for example for JSON bodies).
-- Minimal output sufficient to inspect results (final reports come in Phase 7).
+- Manual pairing in the UI: pair, unpair, re-pair (pairing a request that is already paired releases its old pair). Matching is manual by decision; automatic matching is Stage 4.
+- Unpaired requests are shown as missing (only in legacy) or extra (only in new).
+- Comparison of method, status, URL (host, path, query parameters) and request and response bodies. Headers come in Stage 2.
+- Custom structural JSON diff in `shared` with typed changes (value, type, added, removed). Arrays compared by position.
+- Side-by-side Monaco diff of bodies, diffchecker style, inside resizable panels.
+- Identical pairs get a green marker and stay visible.
+- Not in this phase: headers, filtering, order-only detection, saving, export.
+
+**Tasks:**
+
+- [x] 4.1 Structural JSON diff and entry comparison in `shared`, with tests
+- [x] 4.2 Compare endpoint on the server, with tests
+- [x] 4.3 Pairing logic (pure module) with tests
+- [x] 4.4 UI: two lists side by side, pair and unpair, pair and missing/extra markers, summary counts
+- [x] 4.5 UI: comparison view with change summary and Monaco side-by-side body diff
+- [x] 4.6 Verify in the browser with the real sample HARs; update docs
 
 **Expected outcomes:**
 
-- Given two HARs, the tool lists matched, missing, and additional requests, and the differences within matched pairs.
+- Given two HARs, the user pairs requests and sees paired, missing and extra requests, and the differences within each pair.
 
 **Completion criteria:**
 
-- Results are correct on agreed sample pairs, including known edge cases.
-- Matching decisions are explainable (the tool can show why two requests were matched).
-- User reviews the output and confirms it is useful for the primary use case.
+- Acceptance examples A4 to A17 pass (checked in a real browser with the sample HARs).
+- `npm run check` passes.
 
 **Dependencies:** Phase 3.
 
@@ -390,3 +399,4 @@ Notes on ordering:
 | 2026-11-21 | 1     | Wrote and got approval for `docs/requirements.md` (requirements, 4 build stages, acceptance examples A1-A18). Studied the structure of the two sample HARs without copying content. Phase 1 complete.                                                                                             |
 | 2026-11-21 | 2     | Approved stack recorded in `docs/decisions.md`. Ran and deleted the throwaway spike (server parsing, diff viewers, JSON diff, panels). Wrote `docs/architecture.md` with results and proposals. User approved all items. Phase 2 complete. Version control rule added: commit during development. |
 | 2026-11-21 | 3     | Built the workspace, shared types, HAR parser with tests, upload API, and a minimal UI with Monaco body preview. Verified with both real HARs and in Chrome (22 checks). Phase 3 complete (confirmed by the user).                                                                                |
+| 2026-11-21 | 4     | Added structural JSON diff and entry comparison (shared), compare endpoint (server), manual pairing with missing/extra markers and a side-by-side Monaco comparison view (client). 76 unit tests pass. Verified A4 to A17 in Chrome with both real HARs (20 of 20 checks). Phase 4 complete.      |
