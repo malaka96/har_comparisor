@@ -40,6 +40,8 @@ Status: in development (Stage 3). You can load one HAR on each side, pair equiva
 
 Reloading the page or loading another file clears the pairs. Save a session first to keep them.
 
+**Theme** in the header switches between light and dark, or follows your system setting (the default). The choice is remembered in the browser; it is the only thing the app keeps there. Exported reports always use the light style, which prints better.
+
 ## Run with Docker (easiest)
 
 The image is on Docker Hub: [malaka96/har-comparisor](https://hub.docker.com/r/malaka96/har-comparisor) (`linux/amd64` and `linux/arm64`, so it runs on Windows, Linux and Apple-silicon Macs).

@@ -11,6 +11,14 @@
   --client-error: #b35900;
   --server-error: #cf222e;
   --failed: #6e7781;
+  --tint-ok: #dafbe1;
+  --tint-warn: #fff1e5;
+  --tint-error: #ffebe9;
+  --tint-info: #ddf4ff;
+  --tint-note: #fff8c5;
+  --note-text: #7d4e00;
+  --on-accent: #ffffff;
+  color-scheme: light;
   font-family:
     system-ui,
     -apple-system,
@@ -20,6 +28,30 @@
   font-size: 14px;
   color: var(--text);
   background: var(--bg);
+}
+
+/* Dark theme. `data-theme` on <html> is set from the theme choice (see theme.ts). */
+:root[data-theme='dark'] {
+  --bg: #0d1117;
+  --bg-muted: #161b22;
+  --border: #30363d;
+  --text: #e6edf3;
+  --text-muted: #8d96a0;
+  --accent: #2f81f7;
+  --selected: #1c2d45;
+  --ok: #3fb950;
+  --redirect: #58a6ff;
+  --client-error: #d29922;
+  --server-error: #f85149;
+  --failed: #8b949e;
+  --tint-ok: #12301c;
+  --tint-warn: #33240f;
+  --tint-error: #3d1517;
+  --tint-info: #0c2a45;
+  --tint-note: #352c10;
+  --note-text: #e3b341;
+  --on-accent: #ffffff;
+  color-scheme: dark;
 }
 
 html,
@@ -159,7 +191,7 @@ body,
 }
 
 .banner.error {
-  background: #ffebe9;
+  background: var(--tint-error);
   color: var(--server-error);
 }
 
@@ -181,7 +213,7 @@ body,
 
 .warnings {
   padding: 6px 12px;
-  background: #fff8c5;
+  background: var(--tint-note);
   border-bottom: 1px solid var(--border);
   max-height: 120px;
   overflow: auto;
@@ -393,6 +425,25 @@ table.entries tbody tr.selected {
   white-space: nowrap;
 }
 
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 8px;
+  padding-left: 16px;
+  border-left: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.theme-toggle select {
+  padding: 3px 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+}
+
 .export-error {
   color: var(--server-error);
 }
@@ -451,7 +502,7 @@ table.entries tbody tr.selected {
 .button.primary:not(:disabled) {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .col-pair {
@@ -467,11 +518,11 @@ table.entries tbody tr.selected {
   line-height: 18px;
 }
 .marker.identical {
-  background: #dafbe1;
+  background: var(--tint-ok);
   color: var(--ok);
 }
 .marker.different {
-  background: #fff1e5;
+  background: var(--tint-warn);
   color: var(--client-error);
 }
 .marker.error {
@@ -484,11 +535,11 @@ table.entries tbody tr.selected {
   color: var(--text-muted);
 }
 .marker.missing {
-  background: #ffebe9;
+  background: var(--tint-error);
   color: var(--server-error);
 }
 .marker.extra {
-  background: #ddf4ff;
+  background: var(--tint-info);
   color: var(--redirect);
 }
 
@@ -564,7 +615,7 @@ table.entries tbody tr.selected {
 }
 
 .summary-table tr.differs td {
-  background: #fff1e5;
+  background: var(--tint-warn);
 }
 
 .summary-table tr.info td,
@@ -637,15 +688,15 @@ tr.change.order td:nth-child(2) {
   margin-left: 4px;
   padding: 0 4px;
   border-radius: 4px;
-  background: #fff8c5;
-  color: #7d4e00;
+  background: var(--tint-note);
+  color: var(--note-text);
   font-size: 11px;
   font-weight: 700;
   cursor: help;
 }
 
 .count.headers {
-  color: #7d4e00;
+  color: var(--note-text);
   cursor: help;
 }
 
@@ -676,7 +727,7 @@ table.headers col.header-kind {
 tr.header-row.changed td,
 tr.header-row.added td,
 tr.header-row.removed td {
-  background: #fff1e5;
+  background: var(--tint-warn);
 }
 
 tr.header-row.added td:nth-child(2) {

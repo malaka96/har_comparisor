@@ -6,6 +6,7 @@ import { ComparisonView, type CallCounts } from './components/ComparisonView';
 import { EntryPreview } from './components/EntryPreview';
 import { ExportMenu } from './components/ExportMenu';
 import { SessionMenu, SessionNoticeBanner, type SessionNotice } from './components/SessionMenu';
+import { ThemeToggle } from './components/ThemeToggle';
 import { download } from './download';
 import { applySession, buildSession, parseSession } from './session';
 import type { RowMarker } from './components/EntryTable';
@@ -343,6 +344,7 @@ export function App() {
             onSave={saveSession}
             onLoad={(file) => void loadSession(file)}
           />
+          <ThemeToggle />
         </div>
       </header>
       {sessionNotice && (
