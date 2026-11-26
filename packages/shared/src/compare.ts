@@ -42,14 +42,132 @@ export interface BodyComparison {
   note?: string;
 }
 
+export interface HeaderRow {
+  /** Header name as recorded on the legacy side (or the new side when only there). */
+  name: string;
+  kind: 'same' | 'added' | 'removed' | 'changed';
+  /** Values joined with ", " when the header is repeated. Absent for `added`. */
+  legacy?: string;
+  /** Absent for `removed`. */
+  new?: string;
+  /** True when the header is on the ignore list: shown, but not counted as a difference. */
+  ignored: boolean;
+  /** True when both sides have the header but spell its name with different letter case. */
+  caseDiffers?: boolean;
+}
+
+export interface HeaderComparison {
+  /** True when no header outside the ignore list differs. */
+  identical: boolean;
+  /** Number of differing headers outside the ignore list. */
+  differences: number;
+  /** Every header of both sides, sorted by name. */
+  rows: HeaderRow[];
+}
+
 export interface EntryComparison {
-  /** True when method, status, URL and both bodies are the same. Headers are not compared yet. */
+  /**
+   * True when method, status, URL, both bodies and the headers outside the ignore list are the same.
+   */
   identical: boolean;
   method: ValueComparison<string>;
   status: ValueComparison<number>;
   url: UrlComparison;
+  requestHeaders: HeaderComparison;
+  responseHeaders: HeaderComparison;
   requestBody: BodyComparison;
   responseBody: BodyComparison;
+}
+
+/**
+ * Headers that usually differ on every request, or repeat what is compared elsewhere.
+ * They are still shown, but they do not make a pair "different".
+ */
+export const DEFAULT_IGNORED_HEADERS: readonly string[] = [
+  // HTTP/2 pseudo-headers repeat the method and URL, which are compared on their own.
+  ':authority',
+  ':method',
+  ':path',
+  ':scheme',
+  ':status',
+  // Dates and caching validators change over time.
+  'date',
+  'age',
+  'expires',
+  'last-modified',
+  'etag',
+  'if-modified-since',
+  'if-none-match',
+  // Sizes follow the body, which is compared directly.
+  'content-length',
+  // Sessions and the page the request came from differ between runs and apps.
+  'cookie',
+  'set-cookie',
+  'referer',
+  // Tracing and infrastructure IDs.
+  'x-request-id',
+  'x-correlation-id',
+  'request-id',
+  'traceparent',
+  'tracestate',
+  'x-amzn-trace-id',
+  'x-amz-cf-id',
+  'x-amz-cf-pop',
+  'cf-ray',
+  'server-timing',
+  'report-to',
+  'nel',
+];
+
+const IGNORED = new Set(DEFAULT_IGNORED_HEADERS);
+
+interface HeaderGroup {
+  name: string;
+  values: string[];
+}
+
+function groupHeaders(headers: NameValue[]): Map<string, HeaderGroup> {
+  const groups = new Map<string, HeaderGroup>();
+  for (const { name, value } of headers) {
+    const key = name.toLowerCase();
+    const group = groups.get(key);
+    if (group) group.values.push(value);
+    else groups.set(key, { name, values: [value] });
+  }
+  return groups;
+}
+
+export function compareHeaders(legacy: NameValue[], next: NameValue[]): HeaderComparison {
+  const a = groupHeaders(legacy);
+  const b = groupHeaders(next);
+  const keys = [...new Set([...a.keys(), ...b.keys()])].sort();
+  const rows: HeaderRow[] = [];
+  let differences = 0;
+  for (const key of keys) {
+    const left = a.get(key);
+    const right = b.get(key);
+    const ignored = IGNORED.has(key);
+    let row: HeaderRow;
+    if (left && right) {
+      const same = left.values.join('\u0000') === right.values.join('\u0000');
+      row = {
+        name: left.name,
+        kind: same ? 'same' : 'changed',
+        legacy: left.values.join(', '),
+        new: right.values.join(', '),
+        ignored,
+      };
+      if (left.name !== right.name) row.caseDiffers = true;
+    } else if (left) {
+      row = { name: left.name, kind: 'removed', legacy: left.values.join(', '), ignored };
+    } else {
+      const only = right as HeaderGroup;
+      row = { name: only.name, kind: 'added', new: only.values.join(', '), ignored };
+    }
+    if (row.kind !== 'same' && !ignored) differences++;
+    rows.push(row);
+  }
+  return { identical: differences === 0, differences, rows };
 }
 
 function compareValue<T>(legacy: T, next: T): ValueComparison<T> {
@@ -187,6 +305,8 @@ export function compareEntries(legacy: NormalizedEntry, next: NormalizedEntry): 
   const method = compareValue(legacy.request.method, next.request.method);
   const status = compareValue(legacy.response.status, next.response.status);
   const url = compareUrl(legacy, next);
+  const requestHeaders = compareHeaders(legacy.request.headers, next.request.headers);
+  const responseHeaders = compareHeaders(legacy.response.headers, next.response.headers);
   const requestBody = compareBodies(legacy.request.body, next.request.body);
   const responseBody = compareBodies(legacy.response.body, next.response.body);
   return {
@@ -194,11 +314,15 @@ export function compareEntries(legacy: NormalizedEntry, next: NormalizedEntry): 
       method.identical &&
       status.identical &&
       url.identical &&
+      requestHeaders.identical &&
+      responseHeaders.identical &&
       requestBody.identical &&
       responseBody.identical,
     method,
     status,
     url,
+    requestHeaders,
+    responseHeaders,
     requestBody,
     responseBody,
   };

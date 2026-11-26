@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import type { BodyComparison, EntryComparison } from '@har-comparisor/shared';
+import type { BodyComparison, EntryComparison, HeaderComparison } from '@har-comparisor/shared';
 import { Group, Panel, Separator } from 'react-resizable-panels';
 import { fetchComparison, type ComparisonTarget } from '../api';
 import { statusLabel } from '../format';
 import { useAsync } from '../use-async';
 import { BodyDiff } from './BodyDiff';
-import { BodyTabs, type BodyTab } from './BodyTabs';
+import { BodyTabs, type DetailTab } from './BodyTabs';
+import { HeaderTable } from './HeaderTable';
 
 function targetKey(t: ComparisonTarget): string {
   return `${t.legacyHarId}:${t.legacyIndex}:${t.newHarId}:${t.newIndex}`;
@@ -128,8 +129,20 @@ interface Props {
   paired: boolean;
 }
 
+const DETAIL_TABS: readonly DetailTab[] = [
+  'response',
+  'request',
+  'responseHeaders',
+  'requestHeaders',
+];
+
+function headerBadge(headers: HeaderComparison): string {
+  const count = headers.differences;
+  return count === 0 ? 'same' : `${count} change${count === 1 ? '' : 's'}`;
+}
+
 export function ComparisonView({ target, paired }: Props) {
-  const [tab, setTab] = useState<BodyTab>('response');
+  const [tab, setTab] = useState<DetailTab>('response');
   const state = useAsync(targetKey(target), () => fetchComparison(target));
 
   if (state.status === 'idle' || state.status === 'loading') {
@@ -144,7 +157,7 @@ export function ComparisonView({ target, paired }: Props) {
   }
 
   const { legacy, new: next, comparison } = state.value;
-  const body = tab === 'response' ? comparison.responseBody : comparison.requestBody;
+  const isBodyTab = tab === 'response' || tab === 'request';
 
   return (
     <div className="comparison" data-testid="comparison">
@@ -166,25 +179,38 @@ export function ComparisonView({ target, paired }: Props) {
       <BodyTabs
         tab={tab}
         onChange={setTab}
+        tabs={DETAIL_TABS}
         badges={{
           response: bodyBadge(comparison.responseBody),
           request: bodyBadge(comparison.requestBody),
+          responseHeaders: headerBadge(comparison.responseHeaders),
+          requestHeaders: headerBadge(comparison.requestHeaders),
         }}
       />
       <div className="comparison-body">
-        <Group orientation="horizontal">
-          <Panel id="diff" defaultSize="70%" minSize="20%">
-            <BodyDiff
-              key={tab}
-              legacy={tab === 'response' ? legacy.response.body : legacy.request.body}
-              next={tab === 'response' ? next.response.body : next.request.body}
-            />
-          </Panel>
-          <Separator className="separator vertical" />
-          <Panel id="changes" minSize="10%">
-            <ChangeList body={body} />
-          </Panel>
-        </Group>
+        {isBodyTab ? (
+          <Group orientation="horizontal">
+            <Panel id="diff" defaultSize="70%" minSize="20%">
+              <BodyDiff
+                key={tab}
+                legacy={tab === 'response' ? legacy.response.body : legacy.request.body}
+                next={tab === 'response' ? next.response.body : next.request.body}
+              />
+            </Panel>
+            <Separator className="separator vertical" />
+            <Panel id="changes" minSize="10%">
+              <ChangeList
+                body={tab === 'response' ? comparison.responseBody : comparison.requestBody}
+              />
+            </Panel>
+          </Group>
+        ) : (
+          <HeaderTable
+            headers={
+              tab === 'responseHeaders' ? comparison.responseHeaders : comparison.requestHeaders
+            }
+          />
+        )}
       </div>
     </div>
   );

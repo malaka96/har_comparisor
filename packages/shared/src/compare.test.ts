@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { compareBodies, compareEntries, compareQuery } from './compare.js';
+import { compareBodies, compareEntries, compareHeaders, compareQuery } from './compare.js';
 import type { NormalizedBody, NormalizedEntry } from './har.js';
 
 function entry(overrides: {
@@ -90,6 +90,76 @@ describe('compareEntries', () => {
     expect(result.responseBody.changes).toEqual([
       { path: '$.name', kind: 'value', legacy: '"a"', new: '"b"' },
     ]);
+  });
+});
+
+describe('compareHeaders', () => {
+  const h = (name: string, value: string) => ({ name, value });
+
+  it('matches names without regard to letter case and notes the case difference', () => {
+    const result = compareHeaders(
+      [h('Content-Type', 'application/json')],
+      [h('content-type', 'application/json')],
+    );
+    expect(result.identical).toBe(true);
+    expect(result.rows).toEqual([
+      {
+        name: 'Content-Type',
+        kind: 'same',
+        legacy: 'application/json',
+        new: 'application/json',
+        ignored: false,
+        caseDiffers: true,
+      },
+    ]);
+  });
+
+  it('finds added, removed and changed headers, sorted by name', () => {
+    const result = compareHeaders(
+      [h('Accept', 'application/json'), h('X-Old', '1'), h('Cache-Control', 'no-cache')],
+      [h('Accept', 'text/html'), h('X-New', '2'), h('Cache-Control', 'no-cache')],
+    );
+    expect(result.differences).toBe(3);
+    expect(result.identical).toBe(false);
+    expect(result.rows.map((r) => [r.name, r.kind])).toEqual([
+      ['Accept', 'changed'],
+      ['Cache-Control', 'same'],
+      ['X-New', 'added'],
+      ['X-Old', 'removed'],
+    ]);
+  });
+
+  it('shows ignored headers but does not count them', () => {
+    const result = compareHeaders(
+      [h('Date', 'Mon, 01 Jan 2026 10:00:00 GMT'), h('x-request-id', 'a'), h(':path', '/x')],
+      [h('date', 'Tue, 02 Jan 2026 10:00:00 GMT'), h('X-Request-ID', 'b')],
+    );
+    expect(result.identical).toBe(true);
+    expect(result.differences).toBe(0);
+    expect(result.rows.every((r) => r.ignored)).toBe(true);
+    expect(result.rows.find((r) => r.name === 'Date')?.kind).toBe('changed');
+  });
+
+  it('compares repeated headers as a list', () => {
+    const result = compareHeaders(
+      [h('Vary', 'Origin'), h('Vary', 'Accept')],
+      [h('Vary', 'Origin')],
+    );
+    expect(result.rows[0]).toMatchObject({
+      kind: 'changed',
+      legacy: 'Origin, Accept',
+      new: 'Origin',
+    });
+  });
+
+  it('makes the pair different when a header outside the ignore list differs', () => {
+    const a = entry({});
+    const b = entry({});
+    a.response.headers = [h('Content-Type', 'application/json')];
+    b.response.headers = [h('Content-Type', 'text/plain')];
+    const result = compareEntries(a, b);
+    expect(result.responseHeaders.differences).toBe(1);
+    expect(result.identical).toBe(false);
   });
 });
 

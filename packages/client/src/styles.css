@@ -495,6 +495,42 @@ tr.change.value td:nth-child(2) {
   color: var(--client-error);
 }
 
+.header-table {
+  height: 100%;
+}
+
+.header-table .note {
+  margin: 8px 12px;
+  color: var(--text-muted);
+}
+
+table.headers col.header-name {
+  width: 220px;
+}
+
+table.headers col.header-kind {
+  width: 110px;
+}
+
+tr.header-row.changed td,
+tr.header-row.added td,
+tr.header-row.removed td {
+  background: #fff1e5;
+}
+
+tr.header-row.added td:nth-child(2) {
+  color: var(--ok);
+}
+
+tr.header-row.removed td:nth-child(2) {
+  color: var(--server-error);
+}
+
+tr.header-row.ignored td {
+  background: none;
+  color: var(--text-muted);
+}
+
 .monaco-host {
   height: 100%;
   width: 100%;

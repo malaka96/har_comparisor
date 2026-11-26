@@ -16,6 +16,10 @@ interface EntrySpec {
   response?: { mimeType: string; text?: string; encoding?: 'base64'; size?: number };
   redirectUrl?: string;
   resourceType?: string;
+  /** Extra request headers, added after the default Accept header. */
+  requestHeaders?: Array<{ name: string; value: string }>;
+  /** Extra response headers, added after the default Content-Type header. */
+  responseHeaders?: Array<{ name: string; value: string }>;
 }
 
 const HOST = 'https://api.example.test';
@@ -31,7 +35,7 @@ export function entry(spec: EntrySpec): Json {
       method: spec.method ?? 'GET',
       url: url.toString(),
       httpVersion: 'HTTP/1.1',
-      headers: [{ name: 'Accept', value: 'application/json' }],
+      headers: [{ name: 'Accept', value: 'application/json' }, ...(spec.requestHeaders ?? [])],
       queryString: [],
       cookies: [],
       headersSize: -1,
@@ -42,7 +46,10 @@ export function entry(spec: EntrySpec): Json {
       status: spec.status ?? 200,
       statusText: spec.statusText ?? 'OK',
       httpVersion: 'HTTP/1.1',
-      headers: [{ name: 'Content-Type', value: response.mimeType }],
+      headers: [
+        { name: 'Content-Type', value: response.mimeType },
+        ...(spec.responseHeaders ?? []),
+      ],
       cookies: [],
       content: {
         mimeType: response.mimeType,

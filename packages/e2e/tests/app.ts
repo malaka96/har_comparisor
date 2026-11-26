@@ -61,7 +61,7 @@ export class App {
       .filter({ has: this.page.locator('th', { hasText: new RegExp(`^${label}$`) }) });
   }
 
-  tab(name: 'Response body' | 'Request body') {
+  tab(name: 'Response body' | 'Request body' | 'Response headers' | 'Request headers') {
     return this.page.getByRole('tab', { name: new RegExp(name) });
   }
 

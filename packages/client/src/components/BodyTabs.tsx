@@ -1,21 +1,29 @@
 export type BodyTab = 'response' | 'request';
+export type DetailTab = BodyTab | 'responseHeaders' | 'requestHeaders';
 
-interface Props {
-  tab: BodyTab;
-  onChange: (tab: BodyTab) => void;
-  /** Optional marker after each label, for example a change count. */
-  badges?: Partial<Record<BodyTab, string>>;
-}
-
-const LABELS: Record<BodyTab, string> = {
+const LABELS: Record<DetailTab, string> = {
   response: 'Response body',
   request: 'Request body',
+  responseHeaders: 'Response headers',
+  requestHeaders: 'Request headers',
 };
 
-export function BodyTabs({ tab, onChange, badges }: Props) {
+const BODY_TABS: readonly BodyTab[] = ['response', 'request'];
+
+interface Props<T extends DetailTab> {
+  tab: T;
+  onChange: (tab: T) => void;
+  /** Tabs to show, in order. Defaults to the two body tabs. */
+  tabs?: readonly T[];
+  /** Optional marker after each label, for example a change count. */
+  badges?: Partial<Record<T, string>>;
+}
+
+export function BodyTabs<T extends DetailTab>({ tab, onChange, tabs, badges }: Props<T>) {
+  const list = tabs ?? (BODY_TABS as readonly T[]);
   return (
     <div className="tabs" role="tablist">
-      {(['response', 'request'] as const).map((name) => (
+      {list.map((name) => (
         <button
           key={name}
           role="tab"
