@@ -16,20 +16,20 @@ This is a living document. Update it as decisions, scope, and progress change. S
 
 ## Phase Overview
 
-| #   | Phase                                            | Status |
-| --- | ------------------------------------------------ | ------ |
-| 0   | Project Setup and Working Agreements             | [x]    |
-| 1   | Product Discovery and Requirements               | [x]    |
-| 2   | Architecture and Technology Evaluation           | [x]    |
-| 3   | Foundation: Project Skeleton and HAR Ingestion   | [x]    |
-| 4   | Core Comparison: Request Matching and Basic Diff | [x]    |
-| 5   | Testing Strategy and Quality Baseline            | [x]    |
-| 6   | Advanced Comparison Capabilities                 | [ ]    |
-| 7   | Reporting                                        | [ ]    |
-| 8   | User Interface and Usability                     | [ ]    |
-| 9   | Dockerization and Distribution                   | [ ]    |
-| 10  | Documentation                                    | [ ]    |
-| 11  | Hardening and Release                            | [ ]    |
+| #   | Phase                                            | Status                                            |
+| --- | ------------------------------------------------ | ------------------------------------------------- |
+| 0   | Project Setup and Working Agreements             | [x]                                               |
+| 1   | Product Discovery and Requirements               | [x]                                               |
+| 2   | Architecture and Technology Evaluation           | [x]                                               |
+| 3   | Foundation: Project Skeleton and HAR Ingestion   | [x]                                               |
+| 4   | Core Comparison: Request Matching and Basic Diff | [x]                                               |
+| 5   | Testing Strategy and Quality Baseline            | [x]                                               |
+| 6   | Advanced Comparison Capabilities                 | [x] Stage 2 round; rules and dynamic values later |
+| 7   | Reporting                                        | [~]                                               |
+| 8   | User Interface and Usability                     | [ ]                                               |
+| 9   | Dockerization and Distribution                   | [ ]                                               |
+| 10  | Documentation                                    | [ ]                                               |
+| 11  | Hardening and Release                            | [ ]                                               |
 
 Notes on ordering:
 
@@ -270,7 +270,7 @@ Notes on ordering:
 - [x] 6.2 Filtering and search in the request lists
 - [x] 6.3 Order-only differences (array order, call order)
 - [x] 6.4 Extra difference types
-- [ ] 6.5 Verify with the real sample HARs and in the browser (local build, no Docker); update docs
+- [x] 6.5 Verify with the real sample HARs and in the browser (local build, no Docker); update docs
 
 **Candidate items for later rounds:**
 
@@ -300,14 +300,22 @@ Notes on ordering:
 
 **Objectives:** Present results in forms that people and tools can use.
 
-**Scope (to be refined at kickoff):**
+**Scope (Stage 3: F15 export, F12 saved work):**
 
-- Choose report formats based on requirements (for example human-readable and machine-readable).
-- Summary view: counts of matched, missing, added, and differing requests.
-- Detailed per-request views with clear diffs.
-- Filtering and grouping of results.
-- Exit codes or machine-readable outcomes if CI use is required.
-- Redaction of sensitive data in reports.
+- One report model built in `shared` from the pairs: the summary counts, every pair with its differences (status, URL, headers outside the ignore list, body field changes), and the missing and extra requests. Full bodies are not included.
+- Export as JSON (machine-readable), text, and HTML (readable, self-contained, printable). PDF is the browser's "Save as PDF" of the HTML report, so no headless browser is needed.
+- Redaction, on by default: values of credential headers (`Authorization`, `Cookie`, `Set-Cookie`, API keys, tokens) and of body fields whose name suggests a secret (password, token, secret, key) are replaced in the report. It can be turned off for a private report.
+- Saved work (F12): download the session (file names, pairings, filter) as a small JSON file and load it again on top of the same two HARs. Nothing is stored on the server.
+- Not in scope: CI exit codes (CI is a non-goal).
+
+**Tasks:**
+
+- [ ] 7.1 Report model and redaction in `shared`, with tests
+- [ ] 7.2 Report endpoint on the server (builds the report for a list of pairs)
+- [ ] 7.3 JSON, text and HTML renderers, with tests
+- [ ] 7.4 Export menu in the UI (format and redaction choice, download, print for PDF)
+- [ ] 7.5 Save and load a session file
+- [ ] 7.6 Browser tests, check with the real HARs, docs
 
 **Expected outcomes:**
 
@@ -315,8 +323,9 @@ Notes on ordering:
 
 **Completion criteria:**
 
-- User reviews sample reports on real (sanitized) data and confirms they are clear and useful.
-- Reports contain no unredacted sensitive data when redaction is enabled.
+- Reports in all formats are produced from the real HARs and read clearly.
+- With redaction on, no credential header value or secret-looking body field value appears in any format (tested).
+- A saved session restores the same pairs on the same HARs (tested).
 
 **Dependencies:** Phase 4. Benefits from Phase 6.
 
@@ -436,13 +445,14 @@ Notes on ordering:
 
 ## Progress Log
 
-| Date       | Phase     | Summary                                                                                                                                                                                                                                                                                                                                                                                      |
-| ---------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-11-21 | Setup     | Created `AGENTS.md` and `instructions.md`. No development started.                                                                                                                                                                                                                                                                                                                           |
-| 2026-11-21 | 0         | Initialized git, added remote `origin`, added `.gitignore`, created `docs/`, recorded working agreements. Phase 0 confirmed complete by the user.                                                                                                                                                                                                                                            |
-| 2026-11-21 | 1         | Wrote and got approval for `docs/requirements.md` (requirements, 4 build stages, acceptance examples A1-A18). Studied the structure of the two sample HARs without copying content. Phase 1 complete.                                                                                                                                                                                        |
-| 2026-11-21 | 2         | Approved stack recorded in `docs/decisions.md`. Ran and deleted the throwaway spike (server parsing, diff viewers, JSON diff, panels). Wrote `docs/architecture.md` with results and proposals. User approved all items. Phase 2 complete. Version control rule added: commit during development.                                                                                            |
-| 2026-11-21 | 3         | Built the workspace, shared types, HAR parser with tests, upload API, and a minimal UI with Monaco body preview. Verified with both real HARs and in Chrome (22 checks). Phase 3 complete (confirmed by the user).                                                                                                                                                                           |
-| 2026-11-21 | 4         | Added structural JSON diff and entry comparison (shared), compare endpoint (server), manual pairing with missing/extra markers and a side-by-side Monaco comparison view (client). 76 unit tests pass. Verified A4 to A17 in Chrome with both real HARs (20 of 20 checks). Phase 4 complete.                                                                                                 |
-| 2026-11-21 | 5         | Added `packages/e2e` (Playwright, installed Chrome) with a synthetic scenario covering A1 to A18 and a large-HAR test (2 x 4000 requests, about 40 MB each). Profiled the large case: row clicks about 0.3 s in the page, so no virtual scrolling yet; rows memoized. Filled unit-test gaps (redirects, failed and cancelled requests, XML and text bodies, scheme). Phase 5 complete.       |
-| 2026-11-21 | 9 (early) | Published `malaka96/har-comparisor:0.1.0` and `:latest` to Docker Hub for `linux/amd64` and `linux/arm64` (Stage 1 feature set), at the user's request before Phase 6. Build stage runs on the build machine's platform, so the arm64 image no longer needs an emulated TypeScript and Vite build. Remaining Phase 9 work: compose file for development, image size review, release process. |
+| Date       | Phase     | Summary                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ---------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-11-21 | Setup     | Created `AGENTS.md` and `instructions.md`. No development started.                                                                                                                                                                                                                                                                                                                                                                    |
+| 2026-11-21 | 0         | Initialized git, added remote `origin`, added `.gitignore`, created `docs/`, recorded working agreements. Phase 0 confirmed complete by the user.                                                                                                                                                                                                                                                                                     |
+| 2026-11-21 | 1         | Wrote and got approval for `docs/requirements.md` (requirements, 4 build stages, acceptance examples A1-A18). Studied the structure of the two sample HARs without copying content. Phase 1 complete.                                                                                                                                                                                                                                 |
+| 2026-11-21 | 2         | Approved stack recorded in `docs/decisions.md`. Ran and deleted the throwaway spike (server parsing, diff viewers, JSON diff, panels). Wrote `docs/architecture.md` with results and proposals. User approved all items. Phase 2 complete. Version control rule added: commit during development.                                                                                                                                     |
+| 2026-11-21 | 3         | Built the workspace, shared types, HAR parser with tests, upload API, and a minimal UI with Monaco body preview. Verified with both real HARs and in Chrome (22 checks). Phase 3 complete (confirmed by the user).                                                                                                                                                                                                                    |
+| 2026-11-21 | 4         | Added structural JSON diff and entry comparison (shared), compare endpoint (server), manual pairing with missing/extra markers and a side-by-side Monaco comparison view (client). 76 unit tests pass. Verified A4 to A17 in Chrome with both real HARs (20 of 20 checks). Phase 4 complete.                                                                                                                                          |
+| 2026-11-21 | 5         | Added `packages/e2e` (Playwright, installed Chrome) with a synthetic scenario covering A1 to A18 and a large-HAR test (2 x 4000 requests, about 40 MB each). Profiled the large case: row clicks about 0.3 s in the page, so no virtual scrolling yet; rows memoized. Filled unit-test gaps (redirects, failed and cancelled requests, XML and text bodies, scheme). Phase 5 complete.                                                |
+| 2026-11-21 | 9 (early) | Published `malaka96/har-comparisor:0.1.0` and `:latest` to Docker Hub for `linux/amd64` and `linux/arm64` (Stage 1 feature set), at the user's request before Phase 6. Build stage runs on the build machine's platform, so the arm64 image no longer needs an emulated TypeScript and Vite build. Remaining Phase 9 work: compose file for development, image size review, release process.                                          |
+| 2026-11-22 | 6         | Stage 2 round: header comparison (hosting headers ignored, header differences counted apart from the verdict), filters and search, order-only differences (arrays, call order), extra details (status class, content type, redirects, decoded Base64 path segments, calls per endpoint, size, time). 110 unit and 30 browser tests pass. Real HARs: 34 pairs, 21 identical, 13 different, 34 with header differences, 1 out of order. |
