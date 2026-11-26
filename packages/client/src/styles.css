@@ -577,6 +577,20 @@ table.entries tbody tr.selected {
   min-height: 0;
 }
 
+/* Maximized: the comparison covers the whole page until it is minimized again. */
+.comparison.maximized {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  height: auto;
+  background: var(--bg);
+}
+
+.maximize-button {
+  margin-left: auto;
+  flex: none;
+}
+
 .change-list .note {
   margin: 8px 12px;
   color: var(--text-muted);

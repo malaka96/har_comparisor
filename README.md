@@ -7,7 +7,7 @@ Status: in development (Stage 3). You can load one HAR on each side, pair equiva
 ## How to use
 
 1. Load the legacy HAR on the left and the new HAR on the right (button or drag and drop).
-2. Click a request on each side. The bottom panel shows their comparison straight away.
+2. Click a request on each side. The bottom panel shows their comparison straight away. **Maximize** (top right of the comparison) shows it on the whole page; **Minimize** or Esc returns to the normal layout.
 3. Click **Pair selected** to keep them as a pair. Clicking a paired request selects its partner. **Unpair** releases the pair, and pairing a request again moves it to the new partner.
 4. Markers in the **Pair** column show the state of each request:
    - `#n` green: paired and identical

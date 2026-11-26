@@ -205,6 +205,24 @@ interface Props {
   paired: boolean;
   /** How often each HAR calls the endpoint (same method and path) of its selected request. */
   callCounts?: CallCounts;
+  /** True when the comparison fills the whole page. */
+  maximized?: boolean;
+  onToggleMaximize?: () => void;
+}
+
+function MaximizeButton({ maximized, onToggle }: { maximized: boolean; onToggle: () => void }) {
+  return (
+    <button
+      className="button maximize-button"
+      data-testid="maximize"
+      title={
+        maximized ? 'Back to the normal layout (Esc)' : 'Show the comparison on the whole page'
+      }
+      onClick={onToggle}
+    >
+      {maximized ? 'Minimize' : 'Maximize'}
+    </button>
+  );
 }
 
 const DETAIL_TABS: readonly DetailTab[] = [
@@ -219,7 +237,13 @@ function headerBadge(headers: HeaderComparison): string {
   return count === 0 ? 'same' : `${count} change${count === 1 ? '' : 's'}`;
 }
 
-export function ComparisonView({ target, paired, callCounts }: Props) {
+export function ComparisonView({
+  target,
+  paired,
+  callCounts,
+  maximized = false,
+  onToggleMaximize,
+}: Props) {
   const [tab, setTab] = useState<DetailTab>('response');
   const state = useAsync(targetKey(target), () => fetchComparison(target));
 
@@ -238,7 +262,11 @@ export function ComparisonView({ target, paired, callCounts }: Props) {
   const isBodyTab = tab === 'response' || tab === 'request';
 
   return (
-    <div className="comparison" data-testid="comparison">
+    <div
+      className={maximized ? 'comparison maximized' : 'comparison'}
+      data-testid="comparison"
+      data-maximized={maximized}
+    >
       <div className="comparison-header">
         <span
           className={comparison.identical ? 'verdict identical' : 'verdict different'}
@@ -257,6 +285,7 @@ export function ComparisonView({ target, paired, callCounts }: Props) {
         <span className="preview-url" title={legacy.request.url}>
           {legacy.request.method} {legacy.request.path}
         </span>
+        {onToggleMaximize && <MaximizeButton maximized={maximized} onToggle={onToggleMaximize} />}
       </div>
       <Summary comparison={comparison} callCounts={callCounts} />
       <BodyTabs

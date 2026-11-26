@@ -45,6 +45,17 @@ export function App() {
   const [headerDiffs, setHeaderDiffs] = useState<Set<string>>(new Set());
 
   const [sessionNotice, setSessionNotice] = useState<SessionNotice>();
+  /** The comparison fills the whole page. Esc or Minimize returns to the normal layout. */
+  const [maximized, setMaximized] = useState(false);
+
+  useEffect(() => {
+    if (!maximized) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMaximized(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [maximized]);
 
   function resetPairs() {
     setPairing(EMPTY_PAIRING);
@@ -279,6 +290,8 @@ export function App() {
         }}
         paired={selectedPair !== undefined}
         callCounts={callCountsOf(selection.legacy, selection.new)}
+        maximized={maximized}
+        onToggleMaximize={() => setMaximized((old) => !old)}
       />
     );
   } else if (legacyHar && selection.legacy !== undefined) {
