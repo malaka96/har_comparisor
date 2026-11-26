@@ -14,6 +14,8 @@ interface Props {
   side: string;
   title: string;
   har: HarSummaryResponse | undefined;
+  /** The entries left after filtering. All entries are shown when this is undefined. */
+  visibleEntries?: HarSummaryResponse['entries'] | undefined;
   onLoaded: (har: HarSummaryResponse) => void;
   selectedIndex: number | undefined;
   onSelect: (index: number) => void;
@@ -21,11 +23,22 @@ interface Props {
 }
 
 /** Loads a HAR for one side and lists its requests. */
-export function HarPane({ side, title, har, onLoaded, selectedIndex, onSelect, markers }: Props) {
+export function HarPane({
+  side,
+  title,
+  har,
+  visibleEntries,
+  onLoaded,
+  selectedIndex,
+  onSelect,
+  markers,
+}: Props) {
   const [loadingName, setLoadingName] = useState<string>();
   const [error, setError] = useState<LoadError>();
   const [dragging, setDragging] = useState(false);
   const input = useRef<HTMLInputElement>(null);
+  const shown = visibleEntries ?? har?.entries ?? [];
+  const filtered = har !== undefined && shown.length !== har.entries.length;
 
   async function load(file: File) {
     setLoadingName(file.name);
@@ -110,6 +123,11 @@ export function HarPane({ side, title, har, onLoaded, selectedIndex, onSelect, m
             <span>
               {har.entries.length} request{har.entries.length === 1 ? '' : 's'}
             </span>
+            {filtered && (
+              <span className="shown-count" data-testid={`shown-${side}`}>
+                showing {shown.length}
+              </span>
+            )}
             {har.creator && <span>{har.creator}</span>}
           </div>
           {har.warnings.length > 0 && (
@@ -126,13 +144,19 @@ export function HarPane({ side, title, har, onLoaded, selectedIndex, onSelect, m
             </details>
           )}
           <div className="pane-content scroll">
-            <EntryTable
-              side={side}
-              entries={har.entries}
-              selectedIndex={selectedIndex}
-              onSelect={onSelect}
-              markers={markers}
-            />
+            {shown.length === 0 && har.entries.length > 0 ? (
+              <div className="body-message" data-testid={`no-match-${side}`}>
+                No requests match the filter.
+              </div>
+            ) : (
+              <EntryTable
+                side={side}
+                entries={shown}
+                selectedIndex={selectedIndex}
+                onSelect={onSelect}
+                markers={markers}
+              />
+            )}
           </div>
         </>
       )}

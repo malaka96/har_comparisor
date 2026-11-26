@@ -53,6 +53,41 @@ body,
   color: var(--text-muted);
 }
 
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.filter-bar label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+}
+
+.filter-bar select,
+.filter-bar .filter-text {
+  padding: 3px 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+}
+
+.filter-bar .filter-text {
+  width: 260px;
+}
+
+.shown-count {
+  color: var(--accent);
+  font-weight: 600;
+}
+
 .app-main {
   flex: 1;
   min-height: 0;

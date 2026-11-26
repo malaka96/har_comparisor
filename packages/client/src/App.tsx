@@ -5,7 +5,9 @@ import { fetchComparisonSummary } from './api';
 import { ComparisonView } from './components/ComparisonView';
 import { EntryPreview } from './components/EntryPreview';
 import type { RowMarker } from './components/EntryTable';
+import { FilterBar } from './components/FilterBar';
 import { HarPane } from './components/HarPane';
+import { EMPTY_FILTER, distinctValues, filterEntries, type FilterState } from './filter';
 import {
   EMPTY_PAIRING,
   addPair,
@@ -33,6 +35,7 @@ export function App() {
   const [pairing, setPairing] = useState<PairingState>(EMPTY_PAIRING);
   const [selection, setSelection] = useState<Selection>({});
   const [statuses, setStatuses] = useState<Map<string, PairStatus>>(new Map());
+  const [filter, setFilter] = useState<FilterState>(EMPTY_FILTER);
 
   function resetPairs() {
     setPairing(EMPTY_PAIRING);
@@ -95,6 +98,15 @@ export function App() {
     }
     return { legacy, next };
   })();
+
+  const visibleLegacy = legacyHar
+    ? filterEntries(legacyHar.entries, filter, (i) => markers.legacy.get(i)?.tone)
+    : undefined;
+  const visibleNew = newHar
+    ? filterEntries(newHar.entries, filter, (i) => markers.next.get(i)?.tone)
+    : undefined;
+  const methods = distinctValues([legacyHar?.entries, newHar?.entries], (e) => e.method);
+  const types = distinctValues([legacyHar?.entries, newHar?.entries], (e) => e.resourceType);
 
   const counts = (() => {
     let identical = 0;
@@ -194,6 +206,9 @@ export function App() {
           </button>
         </div>
       </header>
+      {(legacyHar || newHar) && (
+        <FilterBar filter={filter} onChange={setFilter} methods={methods} types={types} />
+      )}
       <main className="app-main">
         <Group orientation="vertical">
           <Panel id="lists" defaultSize="50%" minSize="15%">
@@ -207,6 +222,7 @@ export function App() {
                     setLegacyHar(har);
                     resetPairs();
                   }}
+                  visibleEntries={visibleLegacy}
                   selectedIndex={selection.legacy}
                   onSelect={selectLegacy}
                   markers={markers.legacy}
@@ -222,6 +238,7 @@ export function App() {
                     setNewHar(har);
                     resetPairs();
                   }}
+                  visibleEntries={visibleNew}
                   selectedIndex={selection.new}
                   onSelect={selectNew}
                   markers={markers.next}
