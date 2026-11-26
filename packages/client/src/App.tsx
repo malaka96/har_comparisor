@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { HarSummaryResponse } from '@har-comparisor/shared';
 import { Group, Panel, Separator } from 'react-resizable-panels';
-import { fetchComparisonSummary } from './api';
+import { fetchComparisonSummary, type ReportRequest } from './api';
 import { ComparisonView, type CallCounts } from './components/ComparisonView';
 import { EntryPreview } from './components/EntryPreview';
+import { ExportMenu } from './components/ExportMenu';
 import type { RowMarker } from './components/EntryTable';
 import { FilterBar } from './components/FilterBar';
 import { HarPane } from './components/HarPane';
@@ -201,6 +202,22 @@ export function App() {
     };
   }
 
+  const reportRequest =
+    legacyHar && newHar
+      ? (format: ReportRequest['format'], redact: boolean): ReportRequest => ({
+          legacyHar: legacyHar.id,
+          newHar: newHar.id,
+          format,
+          redact,
+          pairs: pairing.pairs.map((pair) => ({
+            number: numbers.get(pair.id) ?? 0,
+            legacy: pair.legacy,
+            new: pair.new,
+            outOfOrder: moved.has(pair.id),
+          })),
+        })
+      : undefined;
+
   let bottom;
   if (legacyHar && newHar && selection.legacy !== undefined && selection.new !== undefined) {
     bottom = (
@@ -258,6 +275,7 @@ export function App() {
           <button className="button" disabled={!selectedPair} onClick={unpairSelected}>
             Unpair
           </button>
+          <ExportMenu request={reportRequest} />
         </div>
       </header>
       {(legacyHar || newHar) && (

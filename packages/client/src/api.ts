@@ -4,6 +4,7 @@ import type {
   CompareSummaryResponse,
   HarSummaryResponse,
   NormalizedEntry,
+  ReportFormat,
 } from '@har-comparisor/shared';
 
 export class ApiError extends Error {
@@ -88,6 +89,37 @@ export async function fetchComparisonSummary(
 ): Promise<CompareSummaryResponse> {
   const response = await request(compareUrl(target, false));
   return (await response.json()) as CompareSummaryResponse;
+}
+
+export interface ReportRequest {
+  legacyHar: string;
+  newHar: string;
+  format: ReportFormat;
+  redact: boolean;
+  pairs: Array<{ number: number; legacy: number; new: number; outOfOrder: boolean }>;
+}
+
+export interface ReportFile {
+  fileName: string;
+  content: Blob;
+}
+
+function fileNameOf(disposition: string | null, fallback: string): string {
+  const match = disposition ? /filename="([^"]+)"/.exec(disposition) : null;
+  return match?.[1] ?? fallback;
+}
+
+/** Asks the server for a report of the given pairs. */
+export async function fetchReport(body: ReportRequest): Promise<ReportFile> {
+  const response = await request('/api/report', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  return {
+    fileName: fileNameOf(response.headers.get('content-disposition'), `har-report.${body.format}`),
+    content: await response.blob(),
+  };
 }
 
 export function errorMessage(error: unknown): string {
