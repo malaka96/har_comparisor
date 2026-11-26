@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { compareBodies, compareEntries, compareHeaders, compareQuery } from './compare.js';
+import {
+  compareBodies,
+  compareEntries,
+  compareHeaders,
+  compareQuery,
+  decodeBase64Segment,
+} from './compare.js';
 import type { NormalizedBody, NormalizedEntry } from './har.js';
 
 function entry(overrides: {
@@ -160,6 +166,85 @@ describe('compareHeaders', () => {
     const result = compareEntries(a, b);
     expect(result.responseHeaders.differences).toBe(1);
     expect(result.identical).toBe(false);
+  });
+});
+
+describe('decodeBase64Segment', () => {
+  it('decodes Base64 path segments to printable text (A11)', () => {
+    expect(decodeBase64Segment('NzQ0MjQ5NTc0')).toBe('744249574');
+    expect(decodeBase64Segment('dW5kZWZpbmVk')).toBe('undefined');
+    expect(decodeBase64Segment('aGVsbG8gd29ybGQ')).toBe('hello world'); // no padding
+  });
+
+  it('leaves ordinary segments alone', () => {
+    for (const segment of [
+      'items',
+      'orders',
+      'ownership-transfer',
+      '744249574',
+      'GSM_SER_1001',
+      'abc',
+      'ABCDEFGHIJ',
+    ]) {
+      expect(decodeBase64Segment(segment)).toBeUndefined();
+    }
+  });
+});
+
+describe('comparison details (F14)', () => {
+  it('reports status class, content type, size, time and redirect', () => {
+    const a = entry({
+      status: 500,
+      responseBody: { mimeType: 'application/json; charset=utf-8', text: '{}', size: 2 },
+    });
+    const b = entry({ status: 302, responseBody: { mimeType: 'text/html', text: '<p>', size: 3 } });
+    b.response.redirectUrl = 'https://api.example.test/next';
+    b.time = 99;
+    const { details } = compareEntries(a, b);
+    expect(details.statusClass).toEqual({ legacy: '5xx', new: '3xx', identical: false });
+    expect(details.contentType).toEqual({
+      legacy: 'application/json',
+      new: 'text/html',
+      identical: false,
+    });
+    expect(details.responseSize).toEqual({ legacy: 2, new: 3, identical: false });
+    expect(details.redirect).toEqual({
+      legacy: '',
+      new: 'https://api.example.test/next',
+      identical: false,
+    });
+    expect(details.time).toEqual({ legacy: 10, new: 99, identical: false });
+  });
+
+  it('calls status 0 a failed request', () => {
+    expect(
+      compareEntries(entry({ status: 0 }), entry({ status: 0 })).details.statusClass.legacy,
+    ).toBe('failed');
+  });
+
+  it('lists differing path segments with decoded values', () => {
+    const { details } = compareEntries(
+      entry({ url: 'https://a.test/customers/profile/NzQ0MjQ5NTc0' }),
+      entry({ url: 'https://a.test/customers/profile/ODg4' }),
+    );
+    expect(details.pathSegments).toEqual([
+      { position: 3, legacy: 'NzQ0MjQ5NTc0', new: 'ODg4', legacyDecoded: '744249574' },
+    ]);
+  });
+
+  it('skips segment details when the paths have a different number of segments', () => {
+    const { details } = compareEntries(
+      entry({ url: 'https://a.test/a/b' }),
+      entry({ url: 'https://a.test/a/b/c' }),
+    );
+    expect(details.pathSegments).toEqual([]);
+  });
+
+  it('does not change the verdict', () => {
+    const a = entry({});
+    const b = entry({});
+    b.time = 500;
+    expect(compareEntries(a, b).identical).toBe(true);
   });
 });
 

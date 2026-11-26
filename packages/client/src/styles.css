@@ -490,6 +490,11 @@ table.entries tbody tr.selected {
   background: #fff1e5;
 }
 
+.summary-table tr.info td,
+.summary-table tr.info th {
+  color: var(--text-muted);
+}
+
 .comparison-body {
   flex: 1;
   min-height: 0;

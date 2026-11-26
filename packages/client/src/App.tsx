@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { HarSummaryResponse } from '@har-comparisor/shared';
 import { Group, Panel, Separator } from 'react-resizable-panels';
 import { fetchComparisonSummary } from './api';
-import { ComparisonView } from './components/ComparisonView';
+import { ComparisonView, type CallCounts } from './components/ComparisonView';
 import { EntryPreview } from './components/EntryPreview';
 import type { RowMarker } from './components/EntryTable';
 import { FilterBar } from './components/FilterBar';
@@ -167,6 +167,19 @@ export function App() {
     if (selectedPair) setPairing((old) => removePair(old, selectedPair.id));
   }
 
+  /** How often each HAR calls the same method and path as its selected request (F14). */
+  function callCountsOf(legacyIndex: number, newIndex: number): CallCounts | undefined {
+    const legacyEntry = legacyHar?.entries.find((e) => e.index === legacyIndex);
+    const newEntry = newHar?.entries.find((e) => e.index === newIndex);
+    if (!legacyHar || !newHar || !legacyEntry || !newEntry) return undefined;
+    const count = (entries: HarSummaryResponse['entries'], method: string, path: string) =>
+      entries.filter((e) => e.method === method && e.path === path).length;
+    return {
+      legacy: count(legacyHar.entries, legacyEntry.method, legacyEntry.path),
+      new: count(newHar.entries, newEntry.method, newEntry.path),
+    };
+  }
+
   let bottom;
   if (legacyHar && newHar && selection.legacy !== undefined && selection.new !== undefined) {
     bottom = (
@@ -178,6 +191,7 @@ export function App() {
           newIndex: selection.new,
         }}
         paired={selectedPair !== undefined}
+        callCounts={callCountsOf(selection.legacy, selection.new)}
       />
     );
   } else if (legacyHar && selection.legacy !== undefined) {

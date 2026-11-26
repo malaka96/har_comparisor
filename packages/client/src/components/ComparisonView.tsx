@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { BodyComparison, EntryComparison, HeaderComparison } from '@har-comparisor/shared';
 import { Group, Panel, Separator } from 'react-resizable-panels';
 import { fetchComparison, type ComparisonTarget } from '../api';
-import { statusLabel } from '../format';
+import { formatBytes, formatTime, statusLabel } from '../format';
 import { useAsync } from '../use-async';
 import { BodyDiff } from './BodyDiff';
 import { BodyTabs, type DetailTab } from './BodyTabs';
@@ -26,23 +26,46 @@ function Row({
   legacy,
   next,
   same,
+  info,
 }: {
   label: string;
   legacy: string;
   next: string;
   same: boolean;
+  /** Information only: shown greyed and never highlighted. */
+  info?: boolean;
 }) {
+  const className = info ? 'info' : same ? undefined : 'differs';
   return (
-    <tr className={same ? undefined : 'differs'}>
+    <tr className={className}>
       <th>{label}</th>
-      <td>{legacy}</td>
-      <td>{next}</td>
+      <td title={legacy}>{legacy}</td>
+      <td title={next}>{next}</td>
     </tr>
   );
 }
 
-function Summary({ comparison }: { comparison: EntryComparison }) {
-  const { method, status, url } = comparison;
+function withDecoded(value: string, decoded: string | undefined): string {
+  return decoded === undefined ? value : `${value}  →  "${decoded}"`;
+}
+
+const orNone = (value: string) => (value === '' ? '(none)' : value);
+
+export interface CallCounts {
+  legacy: number;
+  new: number;
+}
+
+function Summary({
+  comparison,
+  callCounts,
+}: {
+  comparison: EntryComparison;
+  callCounts: CallCounts | undefined;
+}) {
+  const { method, status, url, details } = comparison;
+  const statusText = (code: number, text: string, cls: string) =>
+    `${statusLabel(code)}${text ? ` ${text}` : ''} (${cls})`;
   return (
     <table className="summary-table" data-testid="comparison-summary">
       <colgroup>
@@ -61,8 +84,8 @@ function Summary({ comparison }: { comparison: EntryComparison }) {
         <Row label="Method" legacy={method.legacy} next={method.new} same={method.identical} />
         <Row
           label="Status"
-          legacy={statusLabel(status.legacy)}
-          next={statusLabel(status.new)}
+          legacy={statusText(status.legacy, details.statusText.legacy, details.statusClass.legacy)}
+          next={statusText(status.new, details.statusText.new, details.statusClass.new)}
           same={status.identical}
         />
         <Row
@@ -72,6 +95,15 @@ function Summary({ comparison }: { comparison: EntryComparison }) {
           same={url.scheme.identical && url.host.identical}
         />
         <Row label="Path" legacy={url.path.legacy} next={url.path.new} same={url.path.identical} />
+        {details.pathSegments.map((segment) => (
+          <Row
+            key={`segment-${segment.position}`}
+            label={`Path segment ${segment.position}`}
+            legacy={withDecoded(segment.legacy, segment.legacyDecoded)}
+            next={withDecoded(segment.new, segment.newDecoded)}
+            same={false}
+          />
+        ))}
         {url.query.changes.map((change) => (
           <Row
             key={change.name}
@@ -81,6 +113,42 @@ function Summary({ comparison }: { comparison: EntryComparison }) {
             same={false}
           />
         ))}
+        <Row
+          label="Content type"
+          legacy={orNone(details.contentType.legacy)}
+          next={orNone(details.contentType.new)}
+          same={details.contentType.identical}
+        />
+        {(details.redirect.legacy !== '' || details.redirect.new !== '') && (
+          <Row
+            label="Redirects to"
+            legacy={orNone(details.redirect.legacy)}
+            next={orNone(details.redirect.new)}
+            same={details.redirect.identical}
+          />
+        )}
+        {callCounts && (
+          <Row
+            label="Calls to endpoint"
+            legacy={String(callCounts.legacy)}
+            next={String(callCounts.new)}
+            same={callCounts.legacy === callCounts.new}
+          />
+        )}
+        <Row
+          label="Response size"
+          legacy={formatBytes(details.responseSize.legacy) || 'unknown'}
+          next={formatBytes(details.responseSize.new) || 'unknown'}
+          same
+          info
+        />
+        <Row
+          label="Time"
+          legacy={formatTime(details.time.legacy) || 'unknown'}
+          next={formatTime(details.time.new) || 'unknown'}
+          same
+          info
+        />
       </tbody>
     </table>
   );
@@ -135,6 +203,8 @@ interface Props {
   target: ComparisonTarget;
   /** True when the two requests are an actual pair, false when only selected side by side. */
   paired: boolean;
+  /** How often each HAR calls the endpoint (same method and path) of its selected request. */
+  callCounts?: CallCounts;
 }
 
 const DETAIL_TABS: readonly DetailTab[] = [
@@ -149,7 +219,7 @@ function headerBadge(headers: HeaderComparison): string {
   return count === 0 ? 'same' : `${count} change${count === 1 ? '' : 's'}`;
 }
 
-export function ComparisonView({ target, paired }: Props) {
+export function ComparisonView({ target, paired, callCounts }: Props) {
   const [tab, setTab] = useState<DetailTab>('response');
   const state = useAsync(targetKey(target), () => fetchComparison(target));
 
@@ -183,7 +253,7 @@ export function ComparisonView({ target, paired }: Props) {
           {legacy.request.method} {legacy.request.path}
         </span>
       </div>
-      <Summary comparison={comparison} />
+      <Summary comparison={comparison} callCounts={callCounts} />
       <BodyTabs
         tab={tab}
         onChange={setTab}

@@ -21,6 +21,13 @@ Status: early development (Stage 1). You can load one HAR on each side, pair equ
 
 8. Order-only differences are labelled as such. A JSON array with the same items in another order shows as one "order only" change. A pair that the new app calls in a different position than the legacy app is marked ↕, and the summary bar counts these as "Out of order". Only the fewest calls that moved are marked.
 
+9. The summary table also shows details that help explain a difference:
+   - status text and status class (2xx, 3xx, 4xx, 5xx, or failed);
+   - content type and redirect target;
+   - each differing path segment, with its decoded text when the segment is Base64 (for example `NzQ0MjQ5NTc0` → `"744249574"`);
+   - how many times each HAR calls the same endpoint (method and path);
+   - response size and time, greyed out because they are information only and never make a pair different.
+
 Reloading the page or loading another file clears the pairs.
 
 ## Run with Docker (easiest)

@@ -65,6 +65,36 @@ export interface HeaderComparison {
   rows: HeaderRow[];
 }
 
+/** One path segment that differs, with its Base64-decoded text when it looks encoded. */
+export interface PathSegmentChange {
+  /** Position of the segment, 1 for the first segment after the leading slash. */
+  position: number;
+  legacy: string;
+  new: string;
+  legacyDecoded?: string;
+  newDecoded?: string;
+}
+
+/**
+ * Extra details shown with a comparison (F14). They help explain a difference, but they do not
+ * decide whether a pair is identical: status, URL, headers and bodies already do that.
+ */
+export interface ComparisonDetails {
+  statusText: ValueComparison<string>;
+  /** `2xx`, `3xx`, `4xx`, `5xx`, or `failed` for status 0. */
+  statusClass: ValueComparison<string>;
+  /** Main response MIME type, for example `application/json`. */
+  contentType: ValueComparison<string>;
+  /** Redirect target recorded by the browser. Empty when there is none. */
+  redirect: ValueComparison<string>;
+  /** Response body size in bytes. -1 when unknown. */
+  responseSize: ValueComparison<number>;
+  /** Total time in milliseconds. -1 when unknown. */
+  time: ValueComparison<number>;
+  /** Differing path segments, only when both paths have the same number of segments. */
+  pathSegments: PathSegmentChange[];
+}
+
 export interface EntryComparison {
   /**
    * True when method, status, URL, both bodies and the headers outside the ignore list are the same.
@@ -77,6 +107,81 @@ export interface EntryComparison {
   responseHeaders: HeaderComparison;
   requestBody: BodyComparison;
   responseBody: BodyComparison;
+  details: ComparisonDetails;
+}
+
+export function statusClassOf(status: number): string {
+  return status <= 0 ? 'failed' : `${Math.floor(status / 100)}xx`;
+}
+
+const BASE64_SEGMENT = /^[A-Za-z0-9+/_-]{8,}={0,2}$/;
+const PRINTABLE = /^[\x20-\x7e]+$/;
+
+/**
+ * Decodes a path segment that looks like Base64 text, for example `NzQ0MjQ5NTc0` (`744249574`).
+ * Returns undefined when the segment is not Base64 or does not decode to printable text.
+ */
+export function decodeBase64Segment(segment: string): string | undefined {
+  let raw: string;
+  try {
+    raw = decodeURIComponent(segment);
+  } catch {
+    raw = segment;
+  }
+  if (!BASE64_SEGMENT.test(raw)) return undefined;
+  // Plain numbers and plain words of letters are far more likely ids or names than Base64.
+  if (/^\d+$/.test(raw) || /^[a-z]+$/.test(raw) || /^[A-Z]+$/.test(raw)) return undefined;
+  // Accept URL-safe Base64 and missing padding.
+  const body = raw.replace(/=+$/, '').replace(/-/g, '+').replace(/_/g, '/');
+  if (body.length % 4 === 1) return undefined;
+  let decoded: string;
+  try {
+    decoded = atob(body + '='.repeat((4 - (body.length % 4)) % 4));
+  } catch {
+    return undefined;
+  }
+  return PRINTABLE.test(decoded) && decoded !== raw ? decoded : undefined;
+}
+
+function comparePathSegments(legacyPath: string, newPath: string): PathSegmentChange[] {
+  const a = legacyPath.split('/');
+  const b = newPath.split('/');
+  if (a.length !== b.length) return [];
+  const changes: PathSegmentChange[] = [];
+  for (let i = 1; i < a.length; i++) {
+    const left = a[i] as string;
+    const right = b[i] as string;
+    if (left === right) continue;
+    const change: PathSegmentChange = { position: i, legacy: left, new: right };
+    const leftDecoded = decodeBase64Segment(left);
+    const rightDecoded = decodeBase64Segment(right);
+    if (leftDecoded !== undefined) change.legacyDecoded = leftDecoded;
+    if (rightDecoded !== undefined) change.newDecoded = rightDecoded;
+    changes.push(change);
+  }
+  return changes;
+}
+
+function mainMimeType(mimeType: string | undefined): string {
+  return (mimeType ?? '').split(';')[0]?.trim().toLowerCase() ?? '';
+}
+
+function compareDetails(legacy: NormalizedEntry, next: NormalizedEntry): ComparisonDetails {
+  return {
+    statusText: compareValue(legacy.response.statusText, next.response.statusText),
+    statusClass: compareValue(
+      statusClassOf(legacy.response.status),
+      statusClassOf(next.response.status),
+    ),
+    contentType: compareValue(
+      mainMimeType(legacy.response.body?.mimeType),
+      mainMimeType(next.response.body?.mimeType),
+    ),
+    redirect: compareValue(legacy.response.redirectUrl, next.response.redirectUrl),
+    responseSize: compareValue(legacy.response.body?.size ?? -1, next.response.body?.size ?? -1),
+    time: compareValue(legacy.time, next.time),
+    pathSegments: comparePathSegments(legacy.request.path, next.request.path),
+  };
 }
 
 /**
@@ -325,6 +430,7 @@ export function compareEntries(legacy: NormalizedEntry, next: NormalizedEntry): 
     responseHeaders,
     requestBody,
     responseBody,
+    details: compareDetails(legacy, next),
   };
 }
 
