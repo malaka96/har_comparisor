@@ -256,7 +256,23 @@ Notes on ordering:
 
 **Objectives:** Make comparisons meaningful by reducing noise and handling real-world variation.
 
-**Scope (candidate items, each to be prioritized and approved separately):**
+**Scope for this round (Stage 2: F5, F10, F13, F14):**
+
+- F5: request and response headers compared by name (case-insensitive), all headers shown side by side. Headers that differ on every request (dates, trace IDs, cookies, content length, HTTP/2 pseudo-headers) are listed but ignored for the verdict, and the ignore list is visible.
+- F10: filter and search in both request lists (text, method, status class, type, pair state).
+- F13: order-only differences: arrays with the same items in another order are reported as one "order" change; pairs whose call order differs are flagged.
+- F14: extra difference types (status class, content type, redirect target, body size, timing as information, decoded Base64 path segments, call count per endpoint).
+- Not in this round: user-defined rules, dynamic value handling, automatic matching (Stage 4), saving and export (Stage 3, Phase 7).
+
+**Tasks:**
+
+- [x] 6.1 Header comparison with a default ignore list (shared, server, UI, tests)
+- [ ] 6.2 Filtering and search in the request lists
+- [ ] 6.3 Order-only differences (array order, call order)
+- [ ] 6.4 Extra difference types
+- [ ] 6.5 Verify with the real sample HARs and in the browser (local build, no Docker); update docs
+
+**Candidate items for later rounds:**
 
 - Dynamic value handling: timestamps, generated IDs, tokens, correlation IDs, random values.
 - User-defined rules: ignore paths, tolerance, regex or pattern-based equivalence, field mapping between legacy and new schemas.

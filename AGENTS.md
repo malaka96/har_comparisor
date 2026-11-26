@@ -52,6 +52,7 @@ Approved stack: TypeScript on Node.js 26 LTS, Fastify, React with Vite, Monaco, 
 - Handle errors explicitly, with clear messages. Never swallow errors silently.
 - Commit completed, verified work in small logical commits with clear messages, without waiting to be asked. Pass the identity per commit (`git -c user.name="malaka96" -c user.email="madhubhashana96@gmail.com" commit ...`) and never change git config. Check `git status` before each commit.
 - Do not push to the remote unless the user asks. The remote is `origin` (`https://github.com/malaka96/har_comparisor.git`).
+- Do not build, run, or publish Docker images outside the Docker phase (Phase 9), unless the user asks. Verify work with the local build (`npm run check`, `npm run test:e2e`) instead.
 
 ## 8. Things the agent still must not do
 
