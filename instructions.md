@@ -267,7 +267,7 @@ Notes on ordering:
 **Tasks:**
 
 - [x] 6.1 Header comparison with a default ignore list (shared, server, UI, tests)
-- [ ] 6.2 Filtering and search in the request lists
+- [x] 6.2 Filtering and search in the request lists
 - [ ] 6.3 Order-only differences (array order, call order)
 - [ ] 6.4 Extra difference types
 - [ ] 6.5 Verify with the real sample HARs and in the browser (local build, no Docker); update docs

@@ -16,6 +16,9 @@ Status: early development (Stage 1). You can load one HAR on each side, pair equ
    - `extra`: not paired, only in new
 5. The comparison compares method, status, host, path, query parameters and the request and response bodies. JSON bodies are compared field by field (key order is ignored, arrays are compared by position) and shown side by side. Headers are not compared yet.
 
+6. Headers are compared too, in the **Response headers** and **Request headers** tabs. Headers that change on every request (dates, cookies, trace IDs, `Content-Length`, HTTP/2 pseudo-headers) are shown greyed out and do not make a pair different.
+7. The filter bar above the lists narrows both lists at once: search the URL, or filter by method, status class, type (for example only XHR and fetch API calls) and pair state (for example only requests that are not paired yet). Filtering never changes the pairs or the counts.
+
 Reloading the page or loading another file clears the pairs.
 
 ## Run with Docker (easiest)
