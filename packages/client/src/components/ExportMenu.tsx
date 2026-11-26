@@ -1,23 +1,12 @@
 import { useState } from 'react';
 import { errorMessage, fetchReport, type ReportRequest } from '../api';
+import { download } from '../download';
 
 type ExportFormat = 'json' | 'text' | 'html' | 'pdf';
 
 interface Props {
   /** Builds the report request, or undefined when both HARs are not loaded yet. */
   request: ((format: ReportRequest['format'], redact: boolean) => ReportRequest) | undefined;
-}
-
-function download(fileName: string, content: Blob) {
-  const url = URL.createObjectURL(content);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = fileName;
-  document.body.append(link);
-  link.click();
-  link.remove();
-  // Give the browser time to start the download before the URL is released.
-  setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
 
 /**

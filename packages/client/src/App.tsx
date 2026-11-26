@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { HarSummaryResponse } from '@har-comparisor/shared';
 import { Group, Panel, Separator } from 'react-resizable-panels';
-import { fetchComparisonSummary, type ReportRequest } from './api';
+import { errorMessage, fetchComparisonSummary, type ReportRequest } from './api';
 import { ComparisonView, type CallCounts } from './components/ComparisonView';
 import { EntryPreview } from './components/EntryPreview';
 import { ExportMenu } from './components/ExportMenu';
+import { SessionMenu, SessionNoticeBanner, type SessionNotice } from './components/SessionMenu';
+import { download } from './download';
+import { applySession, buildSession, parseSession } from './session';
 import type { RowMarker } from './components/EntryTable';
 import { FilterBar } from './components/FilterBar';
 import { HarPane } from './components/HarPane';
@@ -41,9 +44,55 @@ export function App() {
   /** Pair keys whose headers differ outside the ignore list. Counted apart from the verdict. */
   const [headerDiffs, setHeaderDiffs] = useState<Set<string>>(new Set());
 
+  const [sessionNotice, setSessionNotice] = useState<SessionNotice>();
+
   function resetPairs() {
     setPairing(EMPTY_PAIRING);
     setSelection({});
+    setSessionNotice(undefined);
+  }
+
+  const loadedHar = (har: HarSummaryResponse) => ({
+    fileName: har.fileName,
+    indexes: har.entries.map((e) => e.index),
+  });
+
+  function saveSession() {
+    if (!legacyHar || !newHar) return;
+    const session = buildSession(
+      loadedHar(legacyHar),
+      loadedHar(newHar),
+      pairing,
+      filter,
+      new Date().toISOString(),
+    );
+    const base = (name: string) => name.replace(/\.har$/i, '').replace(/[^\w.-]+/g, '_');
+    download(
+      `har-session_${base(legacyHar.fileName)}_vs_${base(newHar.fileName)}.json`,
+      new Blob([`${JSON.stringify(session, null, 2)}\n`], { type: 'application/json' }),
+    );
+  }
+
+  async function loadSession(file: File) {
+    if (!legacyHar || !newHar) return;
+    try {
+      const session = parseSession(await file.text());
+      const applied = applySession(session, loadedHar(legacyHar), loadedHar(newHar));
+      setPairing(applied.pairing);
+      setSelection({});
+      setFilter(applied.filter);
+      setSessionNotice({
+        tone: 'ok',
+        message: `Session loaded: ${applied.restored} pair${applied.restored === 1 ? '' : 's'} restored.`,
+        warnings: applied.warnings,
+      });
+    } catch (caught) {
+      setSessionNotice({
+        tone: 'error',
+        message: `${file.name} could not be loaded. ${errorMessage(caught)}`,
+        warnings: [],
+      });
+    }
   }
 
   // Load the comparison result of each new pair, for the green or orange marker.
@@ -276,8 +325,16 @@ export function App() {
             Unpair
           </button>
           <ExportMenu request={reportRequest} />
+          <SessionMenu
+            ready={legacyHar !== undefined && newHar !== undefined}
+            onSave={saveSession}
+            onLoad={(file) => void loadSession(file)}
+          />
         </div>
       </header>
+      {sessionNotice && (
+        <SessionNoticeBanner notice={sessionNotice} onDismiss={() => setSessionNotice(undefined)} />
+      )}
       {(legacyHar || newHar) && (
         <FilterBar filter={filter} onChange={setFilter} methods={methods} types={types} />
       )}

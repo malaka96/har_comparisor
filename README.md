@@ -2,7 +2,7 @@
 
 A local web tool to compare two HAR (HTTP Archive) files, for example the API traffic of a legacy application and its rewrite.
 
-Status: early development (Stage 1). You can load one HAR on each side, pair equivalent requests by hand, and compare them side by side. Headers, filtering, saving and export come later (see [instructions.md](instructions.md)).
+Status: in development (Stage 3). You can load one HAR on each side, pair equivalent requests by hand, compare them side by side (bodies, headers, query, order), filter both lists, export a report, and save the pairs to a session file. See [instructions.md](instructions.md) for the roadmap.
 
 ## How to use
 
@@ -14,7 +14,7 @@ Status: early development (Stage 1). You can load one HAR on each side, pair equ
    - `#n` orange: paired, with differences
    - `missing`: not paired, only in legacy
    - `extra`: not paired, only in new
-5. The comparison compares method, status, host, path, query parameters and the request and response bodies. JSON bodies are compared field by field (key order is ignored, arrays are compared by position) and shown side by side. Headers are not compared yet.
+5. The comparison compares method, status, host, path, query parameters and the request and response bodies. JSON bodies are compared field by field (key order is ignored, arrays are compared by position) and shown side by side.
 
 6. Headers are compared too, in the **Response headers** and **Request headers** tabs. They are counted apart from the verdict: **Identical** and **Different** reflect method, status, URL and bodies, and a pair whose headers differ gets an **H** mark and counts under **Header differences**. Headers that change on every request or only say where each app is hosted are greyed out and not counted: dates, cookies, trace IDs, `Content-Length`, HTTP/2 pseudo-headers, `Referer`, `Origin`, `Sec-Fetch-*` and the CORS `Access-Control-Allow-Origin` and `-Credentials`.
 7. The filter bar above the lists narrows both lists at once: search the URL, or filter by method, status class, type (for example only XHR and fetch API calls) and pair state (for example only requests that are not paired yet). Filtering never changes the pairs or the counts.
@@ -28,7 +28,17 @@ Status: early development (Stage 1). You can load one HAR on each side, pair equ
    - how many times each HAR calls the same endpoint (method and path);
    - response size and time, greyed out because they are information only and never make a pair different.
 
-Reloading the page or loading another file clears the pairs.
+10. **Export report** saves a report of the pairs you made: the summary counts, each pair with its differences (method, status, URL, query, bodies, then headers), and the requests that are missing or extra. Choose the format next to the button:
+    - **HTML**: one self-contained page with no scripts, readable in any browser.
+    - **PDF (print)**: opens the browser's print dialog with the HTML report. Choose "Save as PDF" there.
+    - **Text**: plain text, easy to paste into a ticket or to diff.
+    - **JSON**: the same data in a fixed structure, for scripts.
+
+    **Redact secrets** is on by default. It replaces the values of credential headers (`Authorization`, `Cookie`, API keys, CSRF tokens) and of any header, query parameter or JSON field whose name suggests a secret (password, token, secret, API key, session, credential) with `[redacted]`. Turn it off only for reports that stay with you.
+
+11. **Save session** downloads a small JSON file with the pairs and the filter. It holds the two file names and request counts, but no HAR content. After a reload, load the same two HARs and use **Load session** to get the pairs back. If the file names or request counts differ, the tool says so, and pairs that point at requests the HARs do not have are skipped.
+
+Reloading the page or loading another file clears the pairs. Save a session first to keep them.
 
 ## Run with Docker (easiest)
 
@@ -100,12 +110,12 @@ Single steps: `npm run format`, `npm run lint`, `npm run typecheck`, `npm test`,
 
 ## Testing approach
 
-| Layer       | Tool                    | Where                                  | What it covers                                                                       |
-| ----------- | ----------------------- | -------------------------------------- | ------------------------------------------------------------------------------------ |
-| Unit        | Vitest                  | `*.test.ts` next to the code           | HAR parsing and edge cases, JSON diff, entry comparison, pairing logic, body display |
-| API         | Vitest + Fastify inject | `packages/server/src/app.test.ts`      | Upload, entry and compare endpoints, error codes, size limit                         |
-| End-to-end  | Playwright              | `packages/e2e/tests`                   | The acceptance examples A1 to A18 in a real browser, against the built app           |
-| Large files | Playwright              | `packages/e2e/tests/large-har.spec.ts` | Two generated HARs of about 40 MB each: load, list, compare, scroll                  |
+| Layer       | Tool                    | Where                                  | What it covers                                                                                         |
+| ----------- | ----------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Unit        | Vitest                  | `*.test.ts` next to the code           | HAR parsing and edge cases, JSON diff, entry comparison, pairing, reports and redaction, session files |
+| API         | Vitest + Fastify inject | `packages/server/src/**/*.test.ts`     | Upload, entry, compare and report endpoints, error codes, size limit                                   |
+| End-to-end  | Playwright              | `packages/e2e/tests`                   | The acceptance examples A1 to A18 in a real browser, against the built app                             |
+| Large files | Playwright              | `packages/e2e/tests/large-har.spec.ts` | Two generated HARs of about 40 MB each: load, list, compare, scroll                                    |
 
 - All test data is synthetic and built in code (`packages/e2e/fixtures/har-fixtures.ts` and `packages/server/src/har/har-builder.test-util.ts`). Real HAR files are never committed.
 - The browser tests use your installed Google Chrome. To use Playwright's own Chromium instead, run `npx playwright install chromium` once and set `PW_CHANNEL=chromium`.
