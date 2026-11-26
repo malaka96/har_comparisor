@@ -246,6 +246,11 @@ export function ComparisonView({ target, paired, callCounts }: Props) {
         >
           {comparison.identical ? 'Identical' : 'Different'}
         </span>
+        {!comparison.headersIdentical && (
+          <span className="header-flag" data-testid="header-note">
+            Headers differ
+          </span>
+        )}
         {!paired && (
           <span className="hint">Not paired yet. Preview of the two selected requests.</span>
         )}

@@ -158,14 +158,31 @@ describe('compareHeaders', () => {
     });
   });
 
-  it('makes the pair different when a header outside the ignore list differs', () => {
+  it('reports header differences separately from the verdict', () => {
     const a = entry({});
     const b = entry({});
     a.response.headers = [h('Content-Type', 'application/json')];
     b.response.headers = [h('Content-Type', 'text/plain')];
     const result = compareEntries(a, b);
     expect(result.responseHeaders.differences).toBe(1);
-    expect(result.identical).toBe(false);
+    expect(result.headersIdentical).toBe(false);
+    expect(result.identical).toBe(true);
+  });
+
+  it('ignores headers that only say where each app is hosted', () => {
+    const result = compareHeaders(
+      [h('Origin', 'https://legacy.example.test'), h('Sec-Fetch-Site', 'same-origin')],
+      [h('Origin', 'https://new.example.test'), h('Sec-Fetch-Site', 'cross-site')],
+    );
+    expect(result.identical).toBe(true);
+    const cors = compareHeaders(
+      [h('Access-Control-Allow-Origin', 'https://legacy.example.test')],
+      [
+        h('Access-Control-Allow-Origin', 'https://new.example.test'),
+        h('Access-Control-Allow-Credentials', 'true'),
+      ],
+    );
+    expect(cors.identical).toBe(true);
   });
 });
 

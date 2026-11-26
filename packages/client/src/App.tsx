@@ -37,6 +37,8 @@ export function App() {
   const [selection, setSelection] = useState<Selection>({});
   const [statuses, setStatuses] = useState<Map<string, PairStatus>>(new Map());
   const [filter, setFilter] = useState<FilterState>(EMPTY_FILTER);
+  /** Pair keys whose headers differ outside the ignore list. Counted apart from the verdict. */
+  const [headerDiffs, setHeaderDiffs] = useState<Set<string>>(new Set());
 
   function resetPairs() {
     setPairing(EMPTY_PAIRING);
@@ -58,7 +60,10 @@ export function App() {
         newHarId: newHar.id,
         newIndex: pair.new,
       })
-        .then(({ comparison }): PairStatus => (comparison.identical ? 'identical' : 'different'))
+        .then(({ comparison }): PairStatus => {
+          if (!comparison.headersIdentical) setHeaderDiffs((old) => new Set(old).add(key));
+          return comparison.identical ? 'identical' : 'different';
+        })
         .catch((): PairStatus => 'error')
         .then((status) => setStatuses((old) => new Map(old).set(key, status)));
     }
@@ -66,6 +71,10 @@ export function App() {
 
   const statusOf = (legacy: number, next: number): PairStatus | undefined =>
     legacyHar && newHar ? statuses.get(pairKey(legacyHar.id, newHar.id, legacy, next)) : undefined;
+  const headersDifferOf = (legacy: number, next: number): boolean =>
+    legacyHar !== undefined &&
+    newHar !== undefined &&
+    headerDiffs.has(pairKey(legacyHar.id, newHar.id, legacy, next));
 
   const numbers = useMemo(() => pairNumbers(pairing), [pairing]);
   const moved = useMemo(() => outOfOrderPairs(pairing), [pairing]);
@@ -86,13 +95,22 @@ export function App() {
               ? 'Paired, comparison failed'
               : 'Paired, comparing...';
       const outOfOrder = moved.has(pair.id);
+      const headersDiffer = headersDifferOf(pair.legacy, pair.new);
+      const extra = headersDiffer ? '; headers differ' : '';
       legacy.set(pair.legacy, {
         label,
         tone,
-        title: `${title} (new #${pair.new})`,
+        title: `${title}${extra} (new #${pair.new})`,
         outOfOrder,
+        headersDiffer,
       });
-      next.set(pair.new, { label, tone, title: `${title} (legacy #${pair.legacy})`, outOfOrder });
+      next.set(pair.new, {
+        label,
+        tone,
+        title: `${title}${extra} (legacy #${pair.legacy})`,
+        outOfOrder,
+        headersDiffer,
+      });
     }
     if (legacyHar && newHar) {
       const legacyIndexes = legacyHar.entries.map((e) => e.index);
@@ -119,15 +137,18 @@ export function App() {
   const counts = (() => {
     let identical = 0;
     let different = 0;
+    let headers = 0;
     for (const pair of pairing.pairs) {
       const status = statusOf(pair.legacy, pair.new);
       if (status === 'identical') identical++;
       else if (status === 'different') different++;
+      if (headersDifferOf(pair.legacy, pair.new)) headers++;
     }
     return {
       pairs: pairing.pairs.length,
       identical,
       different,
+      headers,
       missing: legacyHar ? legacyHar.entries.length - pairing.pairs.length : 0,
       extra: newHar ? newHar.entries.length - pairing.pairs.length : 0,
     };
@@ -218,6 +239,12 @@ export function App() {
           <span className="count different">Different: {counts.different}</span>
           <span className="count missing">Missing in new: {counts.missing}</span>
           <span className="count extra">Extra in new: {counts.extra}</span>
+          <span
+            className="count headers"
+            title="Pairs whose headers differ (marked H). Counted apart from Identical and Different."
+          >
+            Header differences: {counts.headers}
+          </span>
           {moved.size > 0 && (
             <span className="count order" title="Pairs called in a different order (marked ↕)">
               Out of order: {moved.size}

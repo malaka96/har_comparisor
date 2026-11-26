@@ -97,9 +97,12 @@ export interface ComparisonDetails {
 
 export interface EntryComparison {
   /**
-   * True when method, status, URL, both bodies and the headers outside the ignore list are the same.
+   * True when method, status, URL and both bodies are the same. Headers do not decide this;
+   * see `headersIdentical`.
    */
   identical: boolean;
+  /** True when no request or response header outside the ignore list differs. */
+  headersIdentical: boolean;
   method: ValueComparison<string>;
   status: ValueComparison<number>;
   url: UrlComparison;
@@ -209,6 +212,16 @@ export const DEFAULT_IGNORED_HEADERS: readonly string[] = [
   'cookie',
   'set-cookie',
   'referer',
+  // Where each app is hosted: the origin, the browser's fetch metadata about it, and the
+  // server's CORS reply to it. These differ whenever the two apps run on different addresses.
+  'origin',
+  'sec-fetch-site',
+  'sec-fetch-mode',
+  'sec-fetch-dest',
+  'sec-fetch-user',
+  'sec-fetch-storage-access',
+  'access-control-allow-origin',
+  'access-control-allow-credentials',
   // Tracing and infrastructure IDs.
   'x-request-id',
   'x-correlation-id',
@@ -419,10 +432,9 @@ export function compareEntries(legacy: NormalizedEntry, next: NormalizedEntry): 
       method.identical &&
       status.identical &&
       url.identical &&
-      requestHeaders.identical &&
-      responseHeaders.identical &&
       requestBody.identical &&
       responseBody.identical,
+    headersIdentical: requestHeaders.identical && responseHeaders.identical,
     method,
     status,
     url,

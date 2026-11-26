@@ -10,6 +10,8 @@ export interface RowMarker {
   title: string;
   /** True when this pair is called in a different order than the other pairs. */
   outOfOrder?: boolean;
+  /** True when the headers of this pair differ outside the ignore list. */
+  headersDiffer?: boolean;
 }
 
 interface Props {
@@ -30,7 +32,11 @@ function sameMarker(a: RowMarker | undefined, b: RowMarker | undefined): boolean
   if (a === b) return true;
   if (!a || !b) return false;
   return (
-    a.label === b.label && a.tone === b.tone && a.title === b.title && a.outOfOrder === b.outOfOrder
+    a.label === b.label &&
+    a.tone === b.tone &&
+    a.title === b.title &&
+    a.outOfOrder === b.outOfOrder &&
+    a.headersDiffer === b.headersDiffer
   );
 }
 
@@ -52,6 +58,11 @@ const Row = memo(
           {marker && (
             <span className={`marker ${marker.tone}`} title={marker.title}>
               {marker.label}
+            </span>
+          )}
+          {marker?.headersDiffer && (
+            <span className="header-flag" data-testid="header-flag" title="Headers differ">
+              H
             </span>
           )}
           {marker?.outOfOrder && (
