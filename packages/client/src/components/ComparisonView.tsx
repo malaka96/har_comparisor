@@ -86,6 +86,14 @@ function Summary({ comparison }: { comparison: EntryComparison }) {
   );
 }
 
+const CHANGE_LABELS = {
+  value: 'value',
+  type: 'type',
+  added: 'added',
+  removed: 'removed',
+  order: 'order only',
+} as const;
+
 function ChangeList({ body }: { body: BodyComparison }) {
   return (
     <div className="scroll change-list" data-testid="change-list">
@@ -108,7 +116,7 @@ function ChangeList({ body }: { body: BodyComparison }) {
             {body.changes.map((change, i) => (
               <tr key={i} className={`change ${change.kind}`}>
                 <td title={change.path}>{change.path}</td>
-                <td>{change.kind}</td>
+                <td>{CHANGE_LABELS[change.kind]}</td>
                 <td title={change.legacy}>{change.legacy ?? ''}</td>
                 <td title={change.new}>{change.new ?? ''}</td>
               </tr>

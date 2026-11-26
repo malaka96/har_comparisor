@@ -8,6 +8,8 @@ export interface RowMarker {
   label: string;
   tone: MarkerTone;
   title: string;
+  /** True when this pair is called in a different order than the other pairs. */
+  outOfOrder?: boolean;
 }
 
 interface Props {
@@ -27,7 +29,9 @@ interface RowProps {
 function sameMarker(a: RowMarker | undefined, b: RowMarker | undefined): boolean {
   if (a === b) return true;
   if (!a || !b) return false;
-  return a.label === b.label && a.tone === b.tone && a.title === b.title;
+  return (
+    a.label === b.label && a.tone === b.tone && a.title === b.title && a.outOfOrder === b.outOfOrder
+  );
 }
 
 /**
@@ -48,6 +52,15 @@ const Row = memo(
           {marker && (
             <span className={`marker ${marker.tone}`} title={marker.title}>
               {marker.label}
+            </span>
+          )}
+          {marker?.outOfOrder && (
+            <span
+              className="order-flag"
+              data-testid="order-flag"
+              title="Called in a different order than in the other HAR"
+            >
+              ↕
             </span>
           )}
         </td>

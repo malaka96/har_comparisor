@@ -19,6 +19,8 @@ Status: early development (Stage 1). You can load one HAR on each side, pair equ
 6. Headers are compared too, in the **Response headers** and **Request headers** tabs. Headers that change on every request (dates, cookies, trace IDs, `Content-Length`, HTTP/2 pseudo-headers) are shown greyed out and do not make a pair different.
 7. The filter bar above the lists narrows both lists at once: search the URL, or filter by method, status class, type (for example only XHR and fetch API calls) and pair state (for example only requests that are not paired yet). Filtering never changes the pairs or the counts.
 
+8. Order-only differences are labelled as such. A JSON array with the same items in another order shows as one "order only" change. A pair that the new app calls in a different position than the legacy app is marked ↕, and the summary bar counts these as "Out of order". Only the fewest calls that moved are marked.
+
 Reloading the page or loading another file clears the pairs.
 
 ## Run with Docker (easiest)

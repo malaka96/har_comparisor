@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   EMPTY_PAIRING,
   addPair,
+  outOfOrderPairs,
   pairNumbers,
   pairOfLegacy,
   pairOfNew,
@@ -45,6 +46,30 @@ describe('pairing', () => {
     const numbers = pairNumbers(state);
     expect(numbers.get(2)).toBe(1);
     expect(numbers.get(1)).toBe(2);
+  });
+
+  it('flags no pair when the call order is the same', () => {
+    let state = addPair(EMPTY_PAIRING, 0, 0);
+    state = addPair(state, 1, 2);
+    state = addPair(state, 3, 5);
+    expect(outOfOrderPairs(state)).toEqual(new Set());
+  });
+
+  it('flags the fewest pairs that moved (F13)', () => {
+    // Legacy order 0,1,2,3,4. The new app calls legacy 3 first.
+    let state = EMPTY_PAIRING;
+    state = addPair(state, 0, 1); // id 1
+    state = addPair(state, 1, 2); // id 2
+    state = addPair(state, 2, 3); // id 3
+    state = addPair(state, 3, 0); // id 4, moved to the front
+    state = addPair(state, 4, 4); // id 5
+    expect(outOfOrderPairs(state)).toEqual(new Set([4]));
+  });
+
+  it('flags one of two swapped calls', () => {
+    let state = addPair(EMPTY_PAIRING, 2, 3);
+    state = addPair(state, 3, 2);
+    expect(outOfOrderPairs(state).size).toBe(1);
   });
 
   it('lists unpaired entries as missing or extra (A7, A8)', () => {

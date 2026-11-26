@@ -356,6 +356,10 @@ table.entries tbody tr.selected {
 .count.extra {
   color: var(--redirect);
 }
+.count.order {
+  color: var(--redirect);
+  cursor: help;
+}
 
 .actions {
   display: flex;
@@ -528,6 +532,16 @@ tr.change.removed td:nth-child(2) {
 tr.change.type td:nth-child(2),
 tr.change.value td:nth-child(2) {
   color: var(--client-error);
+}
+tr.change.order td:nth-child(2) {
+  color: var(--redirect);
+}
+
+.order-flag {
+  margin-left: 4px;
+  color: var(--redirect);
+  font-weight: 700;
+  cursor: help;
 }
 
 .header-table {

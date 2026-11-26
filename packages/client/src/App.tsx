@@ -11,6 +11,7 @@ import { EMPTY_FILTER, distinctValues, filterEntries, type FilterState } from '.
 import {
   EMPTY_PAIRING,
   addPair,
+  outOfOrderPairs,
   pairNumbers,
   pairOfLegacy,
   pairOfNew,
@@ -67,6 +68,7 @@ export function App() {
     legacyHar && newHar ? statuses.get(pairKey(legacyHar.id, newHar.id, legacy, next)) : undefined;
 
   const numbers = useMemo(() => pairNumbers(pairing), [pairing]);
+  const moved = useMemo(() => outOfOrderPairs(pairing), [pairing]);
 
   const markers = (() => {
     const legacy = new Map<number, RowMarker>();
@@ -83,8 +85,14 @@ export function App() {
             : status === 'error'
               ? 'Paired, comparison failed'
               : 'Paired, comparing...';
-      legacy.set(pair.legacy, { label, tone, title: `${title} (new #${pair.new})` });
-      next.set(pair.new, { label, tone, title: `${title} (legacy #${pair.legacy})` });
+      const outOfOrder = moved.has(pair.id);
+      legacy.set(pair.legacy, {
+        label,
+        tone,
+        title: `${title} (new #${pair.new})`,
+        outOfOrder,
+      });
+      next.set(pair.new, { label, tone, title: `${title} (legacy #${pair.legacy})`, outOfOrder });
     }
     if (legacyHar && newHar) {
       const legacyIndexes = legacyHar.entries.map((e) => e.index);
@@ -196,6 +204,11 @@ export function App() {
           <span className="count different">Different: {counts.different}</span>
           <span className="count missing">Missing in new: {counts.missing}</span>
           <span className="count extra">Extra in new: {counts.extra}</span>
+          {moved.size > 0 && (
+            <span className="count order" title="Pairs called in a different order (marked ↕)">
+              Out of order: {moved.size}
+            </span>
+          )}
         </div>
         <div className="actions">
           <button className="button primary" disabled={!canPair} onClick={pairSelected}>

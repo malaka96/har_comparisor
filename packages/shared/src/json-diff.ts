@@ -7,8 +7,9 @@ export interface JsonChange {
    * - `type`: different JSON types (for example string vs number, or null vs object)
    * - `added`: present only in the new value
    * - `removed`: present only in the legacy value
+   * - `order`: an array with the same items in a different order
    */
-  kind: 'value' | 'type' | 'added' | 'removed';
+  kind: 'value' | 'type' | 'added' | 'removed' | 'order';
   /** Short, readable form of the legacy value. Absent for `added`. */
   legacy?: string;
   /** Short, readable form of the new value. Absent for `removed`. */
@@ -73,6 +74,37 @@ class Collector {
   }
 }
 
+/** JSON text with object keys sorted, so equal values give equal text whatever the key order. */
+function canonical(value: unknown): string {
+  const type = jsonType(value);
+  if (type === 'array') return `[${(value as unknown[]).map(canonical).join(',')}]`;
+  if (type === 'object') {
+    const object = value as Record<string, unknown>;
+    const keys = Object.keys(object).sort();
+    return `{${keys.map((k) => `${JSON.stringify(k)}:${canonical(object[k])}`).join(',')}}`;
+  }
+  return JSON.stringify(value);
+}
+
+/**
+ * True when both arrays hold exactly the same items (counting repeats), but not all in the
+ * same positions. Such arrays are reported as one "order" change instead of many value changes.
+ */
+function isReordered(a: unknown[], b: unknown[]): boolean {
+  if (a.length !== b.length || a.length < 2) return false;
+  const left = a.map(canonical);
+  const right = b.map(canonical);
+  if (left.every((item, i) => item === right[i])) return false;
+  const counts = new Map<string, number>();
+  for (const item of left) counts.set(item, (counts.get(item) ?? 0) + 1);
+  for (const item of right) {
+    const count = counts.get(item);
+    if (!count) return false;
+    counts.set(item, count - 1);
+  }
+  return true;
+}
+
 function walk(legacy: unknown, next: unknown, path: string, out: Collector): void {
   if (out.full) return;
   const legacyType = jsonType(legacy);
@@ -86,6 +118,15 @@ function walk(legacy: unknown, next: unknown, path: string, out: Collector): voi
   if (legacyType === 'array') {
     const a = legacy as unknown[];
     const b = next as unknown[];
+    if (isReordered(a, b)) {
+      out.add({
+        path,
+        kind: 'order',
+        legacy: previewValue(a),
+        new: previewValue(b),
+      });
+      return;
+    }
     const shared = Math.min(a.length, b.length);
     for (let i = 0; i < shared; i++) walk(a[i], b[i], `${path}[${i}]`, out);
     for (let i = shared; i < a.length; i++) {

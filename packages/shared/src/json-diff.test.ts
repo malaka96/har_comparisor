@@ -44,6 +44,25 @@ describe('diffJson', () => {
     ]);
   });
 
+  it('reports an array with the same items in another order as one order change', () => {
+    expect(diffJson({ tags: ['a', 'b', 'c'] }, { tags: ['c', 'a', 'b'] }).changes).toEqual([
+      { path: '$.tags', kind: 'order', legacy: '[3 items]', new: '[3 items]' },
+    ]);
+  });
+
+  it('treats objects with the same content as the same item when checking order', () => {
+    const a = [{ id: 1, n: 'x' }, { id: 2 }];
+    const b = [{ id: 2 }, { n: 'x', id: 1 }];
+    expect(diffJson(a, b).changes).toEqual([
+      { path: '$', kind: 'order', legacy: '[2 items]', new: '[2 items]' },
+    ]);
+  });
+
+  it('counts repeated items, so a different mix is not just an order change', () => {
+    const { changes } = diffJson([1, 1, 2], [1, 2, 2]);
+    expect(changes).toEqual([{ path: '$[1]', kind: 'value', legacy: '1', new: '2' }]);
+  });
+
   it('quotes keys that are not plain identifiers', () => {
     const { changes } = diffJson({ 'first-name': 'a', '0': 1 }, { 'first-name': 'b', '0': 2 });
     expect(changes.map((c) => c.path).sort()).toEqual(['$["0"]', '$["first-name"]']);
