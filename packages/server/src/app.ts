@@ -5,6 +5,7 @@ import { ERROR_CODES, type ApiErrorBody, type ErrorCode } from '@har-comparisor/
 import type { ServerConfig } from './config.js';
 import { HarError } from './har/har-error.js';
 import { registerHarRoutes } from './routes/hars.js';
+import { registerReportRoutes } from './routes/report.js';
 import { HarStore } from './store/har-store.js';
 
 const STATUS_BY_CODE: Record<ErrorCode, number> = {
@@ -58,6 +59,7 @@ export async function buildApp(config: ServerConfig): Promise<FastifyInstance> {
 
   app.get('/api/health', async () => ({ status: 'ok' }));
   registerHarRoutes(app, store);
+  registerReportRoutes(app, store);
 
   if (existsSync(config.clientDistDir)) {
     await app.register(fastifyStatic, { root: config.clientDistDir });
